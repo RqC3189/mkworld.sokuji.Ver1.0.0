@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>24人レース 集計ツール</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 1100px; margin: 0 auto; line-height: 1.6; background-color: #f4f7f9; }
+        body { font-family: sans-serif; padding: 20px; max-width: 1150px; margin: 0 auto; line-height: 2.0; background-color: #f4f7f9; }
         .grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         textarea, .edit-input { width: 100%; font-size: 14px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; padding: 8px; }
@@ -15,16 +15,25 @@
         
         button { padding: 8px 12px; font-size: 14px; cursor: pointer; border: none; border-radius: 4px; transition: 0.2s; }
         .btn-calc { background-color: #0056b3; color: white; width: 100%; font-size: 15px; margin-top: 10px; font-weight: bold; }
+        .btn-calc:hover { background-color: #004085; }
         .btn-reset { background-color: #dc3545; color: white; flex: 1; }
+        .btn-reset:hover { background-color: #c82333; }
         .btn-reset-races { background-color: #f0ad4e; color: white; flex: 1; }
+        .btn-reset-races:hover { background-color: #ec971f; }
+        .btn-reset-coursekey {background-color: #f1f3f5}
+        .btn-reset-coursekey:hover {background-color: #e2e6ea}
         .btn-copy { background-color: #28a745; color: white; width: 100%; margin-bottom: 15px; font-weight: bold; }
+        .btn-copy:hover { background-color: #218838; }
         .btn-delete { background-color: #666; color: white; padding: 3px 8px; font-size: 12px; }
+        .btn-delete:hover { background-color: #4d4d4d; }
+        .btn-clear { background-color: #00bcd4;color: white; border: none; cursor: pointer; border-radius: 4px;}
+        .btn-clear:hover {background-color: #0097a7;}
+
+        .output-box { margin: 0 0 10px 0; padding: 15px; background-color: #f8f9fa; color: #333333; border: 2px solid #6c9bcf; border-radius: 4px; font-weight: bold; font-size: 1.1em; word-break: break-all; min-height: 1.5em; line-height: 1.8; }
         
-        .output-box { margin: 0 0 10px 0; padding: 15px; background-color: #333; color: #fff; border-radius: 4px; font-weight: bold; font-size: 1.1em; word-break: break-all; min-height: 1.5em; line-height: 1.8; }
-        
-        .history-container { max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; }
-        .history-row { display: flex; flex-direction: column; padding: 10px; border-bottom: 2px solid #eee; background: #fff; flex-shrink: 0; }
-        
+        .history-container { max-height: 500px; overflow-y: auto; display: block; }
+        .history-row { display: flex; flex-direction: column; padding: 10px; border-bottom: 2px solid #eee; background: #fff; }
+
         .history-rank-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin-top: 5px; }
         .history-rank-item { display: flex; flex-direction: column; align-items: center; background: #e9ecef; padding: 2px; border-radius: 3px; font-size: 10px; color: #444; position: relative; }
         .history-rank-item input { width: 100%; box-sizing: border-box; padding: 3px 1px; font-size: 11px; text-align: center; border: 1px solid #ccc; font-family: monospace; height: 22px; margin: 0; }
@@ -61,7 +70,6 @@
         .mode-selector { background: #e9ecef; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
         .mode-selector label { display: inline-block; margin-right: 15px; font-weight: normal; cursor: pointer; }
         
-        .target-main-setting { background: #fff; padding: 10px; border: 1px solid #0056b3; border-radius: 4px; margin-bottom: 10px; }
         details.output-options, details.input-options { margin-top: 10px; padding: 10px; border: 1px dashed #ccc; background: #fafafa; font-size: 13.5px; border-radius: 4px; }
         details.output-options summary, details.input-options summary { font-weight: bold; cursor: pointer; color: #555; }
         details.output-options summary { margin-bottom: 10px; }
@@ -86,84 +94,461 @@
             position: fixed; bottom: 30px; left: 30px; background: rgba(0,0,0,0.8); color: white;
             padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold;
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 10000;
+            overflow: hidden; /* バーがはみ出ないように追加 */
         }
         .toast.show { opacity: 1; }
+        
+        #toastProgressBar {
+            position: absolute; bottom: 0; left: 0; height: 4px; background-color: #4CAF50;
+            width: 100%; z-index: 1;
+        }
 
+        /* サジェスト用スタイル */
         .suggest-list {
             position: absolute; top: 100%; left: 0; right: 0; background: white;
             border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px;
             z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            max-height: 200px; overflow-y: auto;
+            position: absolute; z-index: 99999;
         }
         .suggest-item { padding: 5px 10px; cursor: pointer; font-size: 13px; }
         .suggest-item:hover, .suggest-item.active { background-color: #e9ecef; }
+
     </style>
 </head>
 <body>
 
-    <h2>🏁 マリオカートワールド　24人レース　即時集計</h2>
+    <h2>マリオカートワールド　即時集計機（２４人対戦用）</h2>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <details id="details-usage">
+            <summary style="cursor: pointer; font-weight: bold;  font-size: 0.95em; outline: none; display: list-item;">
+                　使用方法
+            </summary>
+            
+            <div style="margin-top: 15px; padding-left: 20px; border-left: 3px solid #eee;">
+                <p style="font-size: 0.9em; margin-bottom: 10px; color: #333333;">
+                    <ul style="font-size: 1.0em; margin-bottom: 10px; color: #333333; padding-left: 20px; line-height: 2.0;">
+                        <li>レース形式（総レース数、チーム人数）を設定してください。</li>
+                        <li>チーム名を設定し、自チームを選択してください。</li>
+                        <li>入力オプションや表示モード・表示オプションを設定してください。</li>
+                        <li>１レース目から順に、「レース情報入力」で順位や走ったコースを入力してください。集計結果は自動で表示されます。</li>
+                        <li>過去のレース情報は、「レース履歴」から参照・修正することができます。</li>
+                    </ul>
+                </p>
+                
+                <details id="details-description">
+                    <summary style="cursor: pointer; color: #333; font-weight: bold; font-size: 0.95em; outline: none; display: list-item;">詳細な説明を見る</summary>
+                    
+                    <div style="margin-top: 1px; font-size: 0.9em; line-height: 1.8; max-width: 1150px; background: #fff; padding: 20px; color: #333;">
+                        
+                        <p style="margin-top: 0; margin-bottom: 25px; font-size: 1.05em;">
+                            マリオカートワールドの、２４人対戦用の即時集計を作成しました。大会やラウンジなどでぜひ使ってみてください。
+                        </p>    
+                                    
+                        <div style="background: #f8f9fa; padding: 15px 10px; border: 1px solid #e9ecef; border-radius: 4px; margin-bottom: 30px;">
+                            <div style="font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #dee2e6; padding-bottom: 10px; margin-bottom: 20px; color: #212529;">目次</div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                
+                                <div style="display: flex; flex-wrap: wrap; align-items: baseline; border-bottom: 1px dashed #dee2e6; padding-bottom: 12px;">
+                                    <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">形式・チーム</div>
+                                    <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
+                                        <li style="font-size: 1.05em;"><a href="#desc-total-races" style="color: #0056b3; text-decoration: none;">総レース数</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-team-count" style="color: #0056b3; text-decoration: none;">チーム人数</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-my-team" style="color: #0056b3; text-decoration: none;">自チーム</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-input-text" style="color: #0056b3; text-decoration: none;">入力文字</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-team-name" style="color: #0056b3; text-decoration: none;">チーム名</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-score-correct" style="color: #0056b3; text-decoration: none;">点数補正</a></li>
+                                    </ul>
+                                </div>
+                        
+                                <div style="display: flex; flex-wrap: wrap; align-items: baseline; border-bottom: 1px dashed #dee2e6; padding-bottom: 12px;">
+                                    <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">レース情報入力</div>
+                                    <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
+                                        <li style="font-size: 1.05em;"><a href="#desc-rank-input" style="color: #0056b3; text-decoration: none;">順位入力</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-course-input" style="color: #0056b3; text-decoration: none;">コース入力</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-rank-order" style="color: #0056b3; text-decoration: none;">順位入力順</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-rank-support" style="color: #0056b3; text-decoration: none;">順位自動補完</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-auto-convert" style="color: #0056b3; text-decoration: none;">コース名自動変換</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-auto-cursor" style="color: #0056b3; text-decoration: none;">道中コース自動カーソル移動</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-convert-key" style="color: #0056b3; text-decoration: none;">変換キー設定</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-short-name" style="color: #0056b3; text-decoration: none;">略称変更設定</a></li>
+                                    </ul>
+                                </div>
+                        
+                                <div style="display: flex; flex-wrap: wrap; align-items: baseline; border-bottom: 1px dashed #dee2e6; padding-bottom: 12px;">
+                                    <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">レース結果・履歴</div>
+                                    <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
+                                        <li style="font-size: 1.05em;"><a href="#desc-result-display" style="color: #0056b3; text-decoration: none;">結果表示</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-display-mode" style="color: #0056b3; text-decoration: none;">表示モード</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-target-rank" style="color: #0056b3; text-decoration: none;">目標順位</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-display-info" style="color: #0056b3; text-decoration: none;">表示情報設定</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-display-team" style="color: #0056b3; text-decoration: none;">表示チーム設定</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-race-history" style="color: #0056b3; text-decoration: none;">レース履歴</a></li>
+                                    </ul>
+                                </div>
+                        
+                                <div style="display: flex; flex-wrap: wrap; align-items: baseline; padding-bottom: 5px;">
+                                    <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">その他</div>
+                                    <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
+                                        <li style="font-size: 1.05em;"><a href="#desc-reset" style="color: #0056b3; text-decoration: none;">リセット</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-version" style="color: #0056b3; text-decoration: none;">バージョン履歴</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-afterword" style="color: #0056b3; text-decoration: none;">あとがき</a></li>
+                                    </ul>
+                                </div>
+                                
+                            </div>
+                        </div>
+                                
+                              
+                        <!--形式・チーム-->
+                        <h3 style="background: #e9ecef; border-left: 4px solid #6c757d; padding: 8px 12px; margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: #212529;">形式・チーム</h3>
+                
+                        <!--総レース数-->
+                        <h4 id="desc-total-races" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">総レース数</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>走行する合計レース数を入力してください。正の整数値が入力できます。初期設定では１２レースに設定されています。</li>
+                        </ul>
+                
+                        <!--チーム人数-->
+                        <h4 id="desc-team-count" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">チーム人数</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>チーム人数を選択してください。タッグ、トリプルス、フォーマンセル、６v６v６v６、８v８v８から選択できます。初期設定ではタッグに設定されています。</li>
+                            <li>６v６v６v６と８v８v８は、ゲーム内のチーム戦設定から自動で集計されるため、基本的にはタッグ、トリプルス、フォーマンセルでの使用を想定しています。</li>
+                            <li>１２v１２は、今後のアップデートで追加予定です。現在のVerでも、入力するチーム数を２つにすれば、無理やり表示させることは可能です。</li>
+                        </ul>
+                
+                        <!--自チーム-->
+                        <h4 id="desc-my-team" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">自チーム</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>自分のチーム、順位や他のチームとの点差を特に知りたいチームを登録してください。すべてのチーム名を登録し終えた後に選択してください。初期設定では「（なし）」に設定されています。</li>
+                            <li>レース情報入力中や、すでにレース情報を入力し終えた後でも変更することができます。</li>
+                            <li>表示モードで、「点差表示」「目標順位特化表示」を選択している場合、自チームを選択しないと結果が表示されないようになっています。</li>    
+                        </ul>
+                
+                        <!--入力文字-->
+                        <h4 id="desc-input-text" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">入力文字</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>ここに登録した文字を順位入力枠に入力すると、チーム名が入力されます。順位入力のショートカットキーとしてお使いください。</li>
+                            <li>レース情報入力中や、すでにレース情報を入力し終えた後でも変更することができます。</li>
+                            <li>異なるチームの入力文字間は、矢印キーで移動可能です。チーム名への移動はShiftキーを押しながら右矢印キーで移動できます。</li>
+                            <li>以下の場合にはエラーが表示されます。エラーのある入力文字は赤枠で囲まれますので、修正をお願いします。
+                                <ul style="padding-left: 20px; margin-top: 3px;">
+                                    <li>入力文字が空欄</li>
+                                    <li>異なるチームで同じ入力文字が登録されている</li>
+                                    <li>異なるチームで判別のつかない入力文字が登録されている（例：「a」と「ab」）</li>
+                                </ul>
+                            </li>
+                            <li>異なるチームで同じ入力文字が登録された場合、入力中の順位表示や、すでに入力したレース結果に不具合が発生します。その場合は、手動で直さないと解決しないので、ご注意ください。</li>
+                        </ul>
+                
+                        <!--チーム名-->
+                        <h4 id="desc-team-name" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">チーム名</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>結果集計時に、表示してほしいチーム名を登録してください。レース情報入力中や、レース履歴でもこの名前が表示されます。</li>
+                            <li>レース情報入力中や、すでにレース情報を入力し終えた後でも変更することができます。</li>
+                            <li>異なるチームのチーム名間は、矢印キーで移動可能です。入力文字、点数補正への移動はShiftキーを押しながら左右矢印キーで移動できます。</li>
+                            <li>レース情報の入力や履歴の修正時は、チーム名での入力も可能です。入力文字とチーム名で同じものがある場合、入力文字の方が優先されます。</li>
+                            <li>以下の場合にはエラーが表示されます。エラーのあるチーム名は赤枠で囲まれますので、修正をお願いします。
+                                <ul style="padding-left: 20px; margin-top: 3px;">
+                                    <li>チーム名が空欄</li>
+                                    <li>同じ名前のチームが２つ以上登録されている</li>
+                                </ul>
+                            </li>
+                            <li>同じ名前のチームが登録されている場合、それらの点数はすべて足されて計算されます。同じ名前のチームで別々に計算したい場合は、半角全角を使い分けるなどで対応してください。</li>
+                            <li>集計結果で同率のチームがある場合は、チーム名が上のチームから表示されます。自チームを同率順位の先頭に表示したい場合は、一番上のチーム名を自チームにしてください。</li>
+                        </ul>
+
+                        <!--点数補正 -->
+                        <h4 id="desc-score-correct" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">点数補正</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>チームごとの加点と減点が可能です。レースの途中から集計を始めたい場合や、コース重複のペナルティとして特定のチームのみ減点したい場合にお使いください。</li>
+                            <li>整数値のみ入力できます。小数値が入力された場合は、整数部分のみ反映されます。</li>
+                            <li>上下矢印キーでも加点と減点が可能です。異なるチーム間の点数補正やチーム名への移動はShiftキーを押しながら矢印キーで移動できます。</li>
+                        </ul>
+                                    
+                        <!-- レース情報入力-->
+                        <h3 style="background: #e9ecef; border-left: 4px solid #6c757d; padding: 8px 12px; margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: #212529;">レース情報入力</h3>
+  
+                        <!-- 順位入力-->
+                        <h4 id="desc-rank-input" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">順位入力</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>マリオカートワールドでは、２４位から順にせりあがるように順位が表示されるため、２４位からの入力を初期設定にしています。１位からの入力に変更したい場合は、入力オプションから設定可能です。</li>
+                            <li>「入力文字」に設定した文字を入力することで、自動的にチーム名が表示され、次の順位にカーソルが移動します。２４枠に順位が入力された時点で、自動的に結果が集計されます。Deleteキーで、１つ前の順位を消すことも可能です。</li>
+                            <li>設定した総レース数を超えてレース情報を登録することはできません。</li>
+                            <li>以下の場合には、２４枠に順位が入力されてもレース情報が登録されず、警告が出ます。
+                                <ul style="padding-left: 20px; margin-top: 3px;">
+                                    <li>未登録の入力文字・チーム名が入力されている</li>
+                                    <li>入力されたチーム名の数が、チーム人数より多い・少ない</li>
+                                </ul>
+                                これらの警告が出た場合、レース情報を修正することができます。誤ってレース情報を登録してしまった場合も後から修正可能です。</li>
+                            <li>レース情報の修正中は、順位の自動カーソル移動は解除されます。修正が完了したら、「レース情報を登録」ボタンを押してください。</li>   
+                            <li>「レース情報を登録」ボタンを押した時点で、入力した情報に問題がある場合、再度警告が出ます。改めて修正をしてください。</li>
+                            <li>順位入力枠は矢印キーで移動可能です。レース情報修正の際にお使いください。</li>
+                            <li>右上の「クリア」ボタンを押すと、入力・修正中の順位がリセットされます。最初から順位を入力したい場合などにお使いください。</li>
+                        </ul>
+
+                        <!-- コース入力-->
+                        <h4 id="desc-course-input" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">コース入力</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>集計結果にコース名を追加したい場合は、「周回」「道中」を選択して、コース名を入力してください。</li>
+                            <li>「周回」と「道中」を切り替えた際は、「周回」のコース名と「道中」の始点のコース名が対応しています。</li>
+                            <li>「道中」選択時、始点と終点はShiftキーを押しながら左右矢印キーで移動可能です。</li>
+                            <li>入力オプションにて、コース名自動変換を設定しておくと、コース名入力が便利です。</li>
+                        </ul>
+                
+                        <!--順位入力順-->
+                        <h4 id="desc-rank-order" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">順位入力順</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>順位入力を２４位から行うか、１位から行うかを変更することができます。初期設定では２４位からの入力に設定されています。</li>
+                            <li>順位入力中にこの設定を変更しても、入力した順位は保存されます。</li>
+                        </ul>
+                
+                        <!--順位自動補完-->
+                        <h4 id="desc-rank-support" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">順位自動補完</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>順位が２３枠に入力された時点で、２４枠目を自動で補完する機能です。最後の１枠を入力しなくてよいため、チェックを付けておくことを推奨します。</li>
+                            <li>２３枠入力時に何らかのエラーがある場合は、自動補完は解除されます。２４枠目を入力すると警告が出るようになっています。</li>
+                            <li>順位入力を修正している間は、自動補完は解除されます。</li>
+                        </ul>
+
+                        <!--コース名自動変換-->
+                        <h4 id="desc-auto-convert" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">コース名自動変換</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>コース名の枠に内部的に登録された文字を入力するだけで、自動でコース名が表示される機能です。</li>
+                            <li>すべてのコースのあらゆる呼び方を登録しています。コースが一意に定まった時点で自動で表示されるようになっています。</li>
+                            <li>コース名の表示形式は「略称表示」「フルネーム表示」「英語略称表示」から選択できます。
+                                <ul style="padding-left: 20px; margin-top: 3px;">
+                                    <li>略称表示：コース名が略称で表示されます（例：マリブサ）。表示される略称は「変換キー・略称変更設定」から変更可能です。</li>
+                                    <li>フルネーム表示：コース名がフルネームで表示されます（例：マリオブラザーズサーキット）。</li>
+                                    <li>英語略称表示：コース名が英語略称で表示されます（例：MBC）。</li>
+                                </ul>
+                            </li>
+                            <li>全角半角、大文字小文字、英数ひらがなカタカナを問わず入力できます。一部コースは、漢字も対応しています。</li>
+                            <li>該当するコースが５個以下になった場合、コース名枠の下にサジェスト表示されます。サジェストではクリック操作のほか、矢印キーとEnterキーによる選択も可能です。（例：「CC」と入力された場合は、 ”トロフィーシティー（CC）” と ”プクプクフォールズ（CCF）” がサジェストに表示されます）</li>
+                            <li>日本語入力の場合、OSのサジェスト変換がコース名のサジェストに覆いかぶさる場合があるため、半角英数での入力を推奨しています。</li>
+                        </ul>
+
+                        <!--道中コース自動カーソル移動-->
+                        <h4 id="desc-auto-cursor" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">道中コース自動カーソル移動</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                        <li>道中コース選択時、始点でのコース名が変換されると、終点に自動でカーソルが移動する機能です。</li>
+                        <li>コース名自動変換で「オフ」を選択している場合、始点入力後にEnterを押すと、終点に自動でカーソルが移動します。</li>
+                        </ul>
+
+                        <!--変換キー設定-->
+                        <h4 id="desc-convert-key" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">変換キー設定</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                        <li>コース名自動変換で「オフ」以外を選択している場合、変換キーに登録した文字を入力すると自動でコース名が表示されます。いわゆる、ユーザ辞書としての使用が可能です。</li>
+                        <li>変換キーに登録した文字と、内部的に登録されている文字で同じものがある場合、変換キーの方が優先されます。</li>
+                        <li>異なるコースで同じ変換キーが登録された場合は、登録した文字が入力された時点でそれらのコースをサジェストに表示します。</li>
+                        <li>登録した変換キーによっては、内部的に登録されている変換が機能しない場合がございます。特に、長い変換キーは非推奨です。</li>
+                        </ul>
+
+                        <!--略称変更設定-->
+                        <h4 id="desc-short-name" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">略称変更設定</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 20px;">
+                        <li>コース名自動変換で「略称表示」選択時、表示する略称をコースごとに登録できます。初期設定での略称から、自由にカスタマイズして下さい。</li>
+                        </ul>
+                        <p style="margin-top: 5px; margin-bottom: 25px;">
+                            変換キーと略称は、「変換キーと略称をリセット」ボタンからリセット可能です。
+                        </p>
+                        
+                                
+                        <!--レース結果・履歴-->
+                        <h3 style="background: #e9ecef; border-left: 4px solid #6c757d; padding: 8px 12px; margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: #212529;">レース結果・履歴</h3>
+
+                        <!--結果表示-->
+                        <h4 id="desc-result-display" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">結果表示</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                        <li>レース情報が登録されると、「現在の順位」に集計結果が表示され、自動でコピーされます。設定の変更によって表示が変わるたびに自動でコピーされるようになっています。</li>
+                        <li>同率のチームは「・」でつないでまとめて表示しています。</li>
+                        <li>表示する情報は、入力オプションから変更できます。末尾の「@n」は、残りレース数を表しています。</li>
+                        <li>「結果をコピー」ボタンを押すことによってコピーすることもできます。</li>
+                        <li>入力文字・チーム名や、登録されたレースにエラーがある場合、色が赤く表示されるので修正を行ってください。</li>
+                        </ul>
+
+                        <!--表示モード-->
+                        <h4 id="desc-display-mode" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">表示モード</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                        <li>「通常表示」：各チームの合計点数が高い順に表示します。自チームを登録していなくても表示可能です。</li>
+                        <li>「点差表示」：自チームと他のチームの点差を順位の高い順に表示します。自チームを登録してから選択してください。</li>
+                        <li>「目標順位特化表示」：あらかじめ目標順位を決めておき、特にその順位に関係するチームのみを表示します。自チームを登録してから選択してください。表示するチームは表示オプションから設定できます。大会などの、通過順位が決まっている場合にお使いください。</li>
+                        </ul>
+
+                        <!--目標順位-->
+                        <h4 id="desc-target-rank" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">目標順位</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                        <li>目標としている順位、特に大会などでの通過順位を設定してください。１位から（総チーム数 －１）位まで設定可能です。</li>
+                        <li>今後の説明で「ボーダー」という単語が出てきますが、「ボーダー」の意味を以下のように定めておきます。<br>
+                            <ul style="padding-left: 20px; margin-top: 3px;">
+                                <li>自チームが目標順位以上の順位のとき ：目標順位の１つ下の順位</li>
+                                <li>自チームが目標順位より下の順位のとき ：目標順位と同じ順位</li>
+                            </ul>
+                            また、自チームが目標順位以上の場合を「ボーダー圏内」、目標順位より下の場合を「ボーダー圏外」と表現します。
+                        </ul>
+
+                        <!--表示情報設定-->
+                        <h4 id="desc-display-info" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">表示情報設定</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                        <li>集計結果に表示する情報を設定することができます。自チームや目標順位を決めていないと、反映されないものもあります。</li>   
+                            <ul style="padding-left: 20px; margin-top: 3px;">
+                            <li>「順位を表示する」：各チームの順位をチーム名の先頭に表示します。同率のチームは、「同率○位」と表示します。</li>
+                            <li>「現在順位を表示」：自チームの現在順位を集計結果の先頭に表示します。同率のチームがいる場合は、「現在同率○位」と表示します。</li>
+                            <li>「ボーダーとの点差を表示」：自チームとボーダーの点差を集計結果の末尾付近に表示します。自チームがボーダーのときは、「○位との点差 ±0」と表示します。</li>
+                            <li>「ボーダーを**で強調する」：ボーダーの順位・チーム・点数（点差）を「**」ではさんで強調します。</li>
+                            <li>「自チームを【】で強調する」：自チームのチーム名を「【】」を付けて強調します。</li>
+                            <li>「点数補正時に「補正込み」を表示」：点数補正を行っている場合に、末尾に「（補正込み）」を表示します。</li>
+                            <li>「「通過/勝利確定」を表示」：すべてのレースが終わるまでにボーダー圏内が確定したときに、集計結果の末尾に確定表示を出します。目標順位が１位のときは「勝利確定」、２位以下のときは「通過確定」を表示します。</li>
+                            <li>「「敗北確定」を表示」：すべてのレースが終わるまでにボーダー圏外が確定したときに、集計結果の末尾に確定表示を出します。</li>
+                            </ul>
+                        </ul>
+
+                        <!--表示チーム設定-->
+                        <h4 id="desc-display-team" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">表示チーム設定</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>表示モードで「目標順位特化表示」選択時に、表示するチームを設定できます。ボーダー圏内・圏外のそれぞれで設定可能です。</li>
+                            <ul style="padding-left: 20px; margin-top: 3px;">
+                            <li>「自チームとボーダーのチームのみ表示」：自チームとボーダーのチームだけを表示します。最低限の情報のみ表示したい場合に選択してください。</li>
+                            <li>「ボーダーまでの全チームを表示」：自チームからボーダーまでのすべてのチームを表示します。ボーダー争いをしているチームを表示したい場合に選択してください。</li>
+                            <li>「ボーダーまでの全チームとボーダー外の指定点差内のチームを表示」：ボーダー方向のチームのうち、指定した点差に収まるチームをすべて表示します。上記に加えて、ボーダー付近の点差が近いチームも表示したい場合に選択してください。</li>
+                            </ul>
+                            <li>「ボーダーまでの全チームとボーダー外の指定点差内のチームを表示」選択時、非負整数値の点差を指定することが可能です。初期設定では、１０点に設定されています。</li>
+                        </ul>
+
+                        <!--レース履歴-->
+                        <h4 id="desc-race-history" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">レース履歴</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>登録したレース情報を参照することができます。</li>
+                            <li>登録したレース情報を修正することができます。順位・コース名入力枠を選択して、正しいレース情報を入力してください。</li>
+                            <li>順位入力枠は、入力文字での入力のほか、チーム名でも入力できます。カーソル自動移動および、順位自動補完は対応しておりません。</li>
+                            <li>順位入力枠は矢印キーで移動可能です。また、「道中」選択時、始点と終点はShiftキーを押しながら左右矢印キーで移動可能です。</li>
+                            <li>登録したレース情報にエラーがある場合、そのレースの順位入力枠の下側に警告が出ます。レース情報を修正してください。
+                                <ul style="padding-left: 20px; margin-top: 5px; margin-bottom: 3px;">
+                                    <li>⚠️人数超過 / ⚠️人数不足：チーム人数を超える、あるいはチーム人数に満たないチーム名の入力がある</li>
+                                    <li>⚠️未登録：未登録の入力文字・チーム名が入力されている</li>
+                                    <li>⚠️空欄あり：入力されていない順位がある</li>
+                                </ul>
+                            </li>
+                            <li>「クリア」ボタンを押すと、そのレースの結果がリセットされます。レース情報を最初から修正したい場合などにお使いください。</li>
+                            <li>「削除」ボタンを押すと、そのレース結果が削除されます。入力後にそのレースがカウントされなかった場合などにお使いください。</li>
+                        </ul>
+                                     
+                        <h3 style="background: #e9ecef; border-left: 4px solid #6c757d; padding: 8px 12px; margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: #212529;">その他</h3>
+
+                        <h4 id="desc-reset" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">リセット</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>「レースと点数補正をリセット」を押すと、入力中のレース情報、レース履歴、点数補正がリセットされます。すべてのレースが終わった後に、また新しく集計を始めたいときなどにお使いください。</li>
+                            <li>「初期状態にリセット」を押すと、すべての設定がリセットされます。ユーザーが設定した変換キーや略称などもリセットされるので、注意してください。</li>
+                            <li>リセットの際を含み、画面上部に警告が出ているタイミングで再読み込みをすると、レース情報の入力ができなくなる場合がございますので、お控えください。</li>
+                        </ul>
+
+                        <h4 id="desc-version" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">バージョン履歴</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>Ver1.1.0　機能を多数追加しました。使用方法と詳細な説明を追加しました。</li>
+                            <li>Ver1.0.0　リリースしました。</li>
+                        </ul>
+
+                        <h4 id="desc-afterword" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">あとがき</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 25px;">
+                            <li>この即時集計の作成にあたり、@GunpeeSpla氏の「マリオカート8DX 即時集計機」を参考にさせていただきました。この場でお礼申し上げます。</li>
+                            <li>この即時集計は、PCでの使用を想定しています。もし、何らかのバグや不具合を見つけた場合は、X（旧Twitter）にて、「#ワールド即時」を付けてポストしてください。機能の追加要望も同様です。</li>
+                        </ul>
+                    
+                </details>
+                        
+                    </div>
+                </details>
+            </div>
+        </details>
+    </div>
 
     <div class="grid">
         <div class="sidebar">
             <div class="card">
-                <div class="settings-row">
-                    <div>
-                        <label>⚙️ 総レース数</label>
-                        <input type="number" class="full-width" id="totalRaces" value="12" min="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll()">
+                <div style="margin-bottom: 15px;">
+                    <label style="margin: 0;">🚗 レース形式</label>
+                </div>
+                <div class="settings-row" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>🏁 総レース数</label>
+                        <input type="number" class="full-width" id="totalRaces" value="12" min="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll(event)">
                     </div>
-                    <div>
-                        <label>👥 チーム数</label>
+                    
+                    <div style="flex: 2;">
+                        <label>👥 チーム人数</label>
                         <select class="full-width" id="teamCountSelect" onchange="buildTeamInputs()">
-                            <option value="12" selected>2人×12チーム</option>
-                            <option value="8">3人×8チーム</option>
-                            <option value="6">4人×6チーム</option>
+                            <option value="12" selected>タッグ(２人)</option>
+                            <option value="8">トリプルス(３人)</option>
+                            <option value="6">フォーマンセル(４人)</option>
+                            <option value="4">６v６v６v６(６人)</option>
+                            <option value="3">８v８v８(８人)</option>
                         </select>
                     </div>
                 </div>
-                
-                <div>
-                    <label>🌟 自チーム</label>
-                    <select class="full-width" id="myTeamSelect" onchange="updateAll()"></select>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
+                    <label style="white-space: nowrap; margin-bottom: 0;">🌟 自チーム</label>
+                    <select class="full-width" id="myTeamSelect" style="margin-bottom: 0;" onchange="updateAll(event)"></select>
                 </div>
-                <details class="team-settings">
+                <details id="details-team-settings" class="team-settings">
                     <summary>👥 入力文字・チーム名・点数補正設定</summary>
                     <div class="team-inputs-wrapper">
                         <div class="col-header"><span class="abbr">入力文字</span><span class="name">チーム名</span><span class="correction">点数補正</span></div>
                         <div id="teamInputsContainer"></div>
                     </div>
+                    <div id="abbrErrorMessage" style="color: red; font-weight: bold; font-size: 11.5px; margin-bottom: 5px; display: none; "></div>
                 </details>
             </div>
             <div class="button-group">
                 <button class="btn-reset-races" onclick="resetRaces()">レースと点数補正を<br>リセット</button>
-                <button class="btn-reset" onclick="resetAll()">全てリセット</button>
+                <button class="btn-reset" onclick="resetAll()">設定を初期状態にする</button>
             </div>
         </div>
 
         <div class="main">
-            <div class="card">
-                <label>📝 レース情報</label>
+            <div class="card" style="position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label style="margin: 0;">✍️ レース情報入力</label>
+                    <button class="btn-clear" style="padding: 2px 8px; font-size: 11px;" onclick="clearCurrentRaceInput()">クリア</button></div>
                 <div id="newRaceInputGrid" class="history-rank-grid" style="margin-bottom: 15px;"></div>
 
-                <div class="course-input-area">
+                <div class="course-input-area"style="height: 32px;">
                     <div class="course-radio-group">
-                        <label><input type="radio" name="courseType" value="lap" checked onchange="toggleCourseInput()"> 周回</label>
-                        <label><input type="radio" name="courseType" value="section" onchange="toggleCourseInput()"> 道中</label>
-                    </div>   
+                        <label><input type="radio" name="courseType" value="lap" checked onchange="toggleCourseInput(); saveData();"> 周回</label>
+                        <label><input type="radio" name="courseType" value="section" onchange="toggleCourseInput(); saveData();"> 道中</label>
+                    </div>
+                    
                     <div style="position:relative; flex:1; display: flex; align-items: center; gap: 5px;">
-                        <input type="text" id="courseName1" placeholder="コース名" style="flex:1;" autocomplete="off"
-                            oninput="handleCourseInput(event)" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event)" onkeydown="handleSuggestKeydown(event)">
+                        <input type="text" id="courseName1" placeholder="コース名" style="flex:1;" autocomplete="new-password" 
+                               oninput="handleCourseInput(event); saveData();" 
+                               oncompositionstart="handleCompositionStart()" 
+                               oncompositionend="handleCompositionEnd(event)" 
+                               onkeydown="handleSuggestKeydown(event)">
                         <div id="suggest_courseName1" class="suggest-list"></div>
                     </div>
+                    
                     <span id="courseSeparator" style="display:none;">→</span>
+                    
                     <div style="position:relative; flex:1; display:none; align-items: center; gap: 5px;" id="courseName2Wrapper">
-                        <input type="text" id="courseName2" placeholder="終点" style="flex:1;" autocomplete="off"
-                            oninput="handleCourseInput(event)" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event)" onkeydown="handleSuggestKeydown(event)">
+                        <input type="text" id="courseName2" placeholder="コース名（終点）" style="flex:1;" autocomplete="off" 
+                               oninput="handleCourseInput(event); saveData();" 
+                               oncompositionstart="handleCompositionStart()" 
+                               oncompositionend="handleCompositionEnd(event)" 
+                               onkeydown="handleSuggestKeydown(event)">
                         <div id="suggest_courseName2" class="suggest-list"></div>
                     </div>
                 </div>
 
-                <button class="btn-calc" onclick="addRace()">追加 (Enter)</button>
+                <button id="btnAddRace" class="btn-calc" style="display:none;" onclick="addRace()">結果を登録 (Ctrl Enter)</button>
 
+                <!--
+                <div id="newRaceInputGrid">
+                    </div>
+                <div style="margin-top:10px;">
+                    <button id="btnAddRace" onclick="addRace()" class="btn-calc" style="display:none;">結果を登録 (Ctrl+Enter)</button>
+                </div>
+                -->
+                
                 <details class="input-options">
                     <summary>⚙️ 入力オプション</summary>
                     <div class="input-order-row" style="margin-top: 10px;">
@@ -171,26 +556,22 @@
                         <label><input type="radio" name="inputOrder" value="desc" checked onchange="renderRaceInputGrid(); renderHistory(); saveData();"> 24位→1位</label>
                         <label><input type="radio" name="inputOrder" value="asc" onchange="renderRaceInputGrid(); renderHistory(); saveData();"> 1位→24位</label>
                     </div>
+                    <div class="input-order-row" style="margin-top: 7px;">
+                        <strong>順位自動補完:</strong>
+                        <label><input type="checkbox" id="optAutoFill23"  onchange="saveData();"> 24枠目を自動で補完</label>                   
+                     </div>
                     <div class="input-order-row">
                         <strong>コース名自動変換表示:</strong>
                         <label><input type="radio" name="courseAutoConvert" value="none" checked onchange="saveData()"> オフ</label>
-                        <label><input type="radio" name="courseAutoConvert" value="abbr" onchange="saveData()"> 日本語略称表示</label>
+                        <label><input type="radio" name="courseAutoConvert" value="abbr" onchange="saveData()"> 略称表示</label>
                         <label><input type="radio" name="courseAutoConvert" value="full" onchange="saveData()"> フルネーム表示</label>
                         <label><input type="radio" name="courseAutoConvert" value="enAbbr" onchange="saveData()"> 英語略称表示</label>
                     </div>
-                    <div style="font-size: 11px; color: #666; padding: 0 10px; margin-top: -5px;">
-                        ※登録した文字を入力した瞬間に自動で変換されます
-                    </div>
-                    <div class="input-order-row">
+                    <div class="input-order-row" style="margin-top: 7px;">
                         <strong>自動カーソル移動:</strong>
-                        <label><input type="checkbox" id="optAutoMoveToNext" onchange="saveData()"> 道中コースで始点変換後、終点へ自動でカーソルを移動する</label>
+                        <label><input type="checkbox" id="optAutoMoveToNext" onchange="saveData()"> 道中コース選択時、始点変換後に終点へ自動でカーソルを移動する</label>
                     </div>
-                    
-
-                    <details style="margin-top: 15px; border: 1px solid #ddd; padding: 10px; background: #fff; border-radius: 4px;">
-                        <summary style="font-weight: bold; cursor: pointer; color: #333; font-size: 13.5px; outline: none;">📝 日本語略称変更設定</summary>
-                        <div id="customAbbrContainer" class="team-inputs-wrapper" style="max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
-                    </details>
+                    <div id="customAbbrContainer" style="margin-top: 15px;"></div>
                 </details>
             </div>
 
@@ -198,63 +579,80 @@
                 <label>📊 現在の順位</label>
                 <div id="resultOutput" class="output-box"></div>
                 <button class="btn-copy" onclick="manualCopy()">結果をコピー</button>
-                
                 <div class="mode-selector">
-                    <strong>表示モード:</strong><br>
-                    <label><input type="radio" name="displayMode" value="normal" checked onchange="updateAll()"> 通常表示</label>
-                    <label><input type="radio" name="displayMode" value="diff" onchange="updateAll()"> 点差表示</label>
-                    <label><input type="radio" name="displayMode" value="target" onchange="updateAll()"> 目標順位特化表示</label>
-
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 20px; margin: 3px 0; padding-left: 10px; min-height: 45px; font-size: 1em;">
+                        <span style="margin: 0; font-weight: normal;">表示モード：</span>
+                        <label style="margin: 0; display: flex; align-items: center; cursor: pointer; font-weight: normal;">
+                            <input type="radio" name="displayMode" value="normal" checked onchange="updateAll(event);saveData();" style="margin: 0 4px 0 0;"> 通常表示
+                        </label>
+                        <label style="margin: 0; display: flex; align-items: center; cursor: pointer; font-weight: normal;">
+                            <input type="radio" name="displayMode" value="diff" onchange="updateAll(event);saveData();" style="margin: 0 4px 0 0;"> 点差表示
+                        </label>
+                        <label style="margin: 0; display: flex; align-items: center; cursor: pointer; font-weight: normal;">
+                            <input type="radio" name="displayMode" value="target" onchange="updateAll(event);saveData();" style="margin: 0 4px 0 0;"> 目標順位特化表示
+                        </label>
+                        <div id="targetMainArea" style="display:none; margin-left: 25px; padding: 6px 12px; border: 2px solid #ccc; border-radius: 6px; background-color: #f9f9f9; font-size: 1em; box-sizing: border-box;">
+                            <label style="margin: 0; font-weight: normal; display: flex; align-items: center; gap: 6px; color: #333;">
+                                目標順位: 
+                                <input type="number" id="targetRank" value="1" min="1" 
+                                       style="width: 50px; padding: 2px 4px; font-size: 1em; border: 1px solid #aaa; border-radius: 3px; font-weight: normal; text-align: center;" 
+                                       onkeypress="return event.charCode >= 48 && event.charCode <= 57" 
+                                       onchange="updateAll(event)"> 位
+                            </label>
+                        </div>
+                    </div>
                     <details class="output-options">
                         <summary>⚙️ 表示オプション</summary>
                         <div class="config-group">
-                            <strong>📝 テキスト表示形式</strong>
-                            <label class="inline-label"><input type="checkbox" id="optShowRankText" onchange="updateAll()"> 順位を表示する</label>
-                            <label class="inline-label"><input type="checkbox" id="optShowMyRankPrefix" checked onchange="updateAll()"> 現在順位を表示する</label>
-                            <label class="inline-label"><input type="checkbox" id="optShowBorderDiffSuffix" onchange="updateAll()"> ボーダーとの点差を表示する</label>
-                            <label class="inline-label"><input type="checkbox" id="showCorrectionText" checked onchange="updateAll()"> 点数補正時に「補正込み」を表示</label>
-                            <label class="inline-label"><input type="checkbox" id="showGuaranteeText" checked onchange="updateAll()"> 「通過/勝利確定」を表示</label>
-                            <label class="inline-label"><input type="checkbox" id="showDefeatText" onchange="updateAll()"> 敗北確定を表示</label>
+                            <strong>📝 表示情報設定</strong>
+                            <label class="inline-label"><input type="checkbox" id="optShowRankText" onchange="updateAll(event);saveData();"> 順位を表示する</label>
+                            <label class="inline-label"><input type="checkbox" id="optShowMyRankPrefix" onchange="updateAll(event);saveData();"> 現在順位を表示する</label>
+                            <label class="inline-label"><input type="checkbox" id="optShowBorderDiffSuffix" onchange="updateAll(event);saveData();"> ボーダーとの点差を表示する</label>
+                            <label class="inline-label"><input type="checkbox" id="optHighlightBorder" onchange="updateAll(event);saveData();"> ボーダーを**で強調する</label>   
+                            <label class="inline-label"><input type="checkbox" id="optHighlightMyTeam" onchange="updateAll(event);saveData();"> 自チームを【】で強調する</label>
+                            <label class="inline-label"><input type="checkbox" id="showCorrectionText" onchange="updateAll(event);saveData();"> 点数補正時に「補正込み」を表示</label>
+                            <label class="inline-label"><input type="checkbox" id="showGuaranteeText" onchange="updateAll(event);saveData();"> 「通過/勝利確定」を表示</label>
+                            <label class="inline-label"><input type="checkbox" id="showDefeatText" onchange="updateAll(event);saveData();"> 「敗北確定」を表示</label>
                         </div>
-                        <div id="targetMainArea" class="target-main-setting" style="display:none;">
-                            <label class="inline-label" style="margin-top:5px;">
-                                目標順位: <input type="number" id="targetRank" value="1" min="1" style="width: 60px;" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll()"> 位
-                            </label>
-                        </div>
-                        <div id="borderAdvancedConfigs" style="display:none;">
-                            <div class="config-group">
+                        
+                        <details id="borderAdvancedConfigs" style="display:none; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; margin-top: 10px;">
+                            <summary style="font-weight: bold; cursor: pointer; color: #333; font-size: 13.5px; outline: none;">🎯 表示チーム設定</summary>
+                            <div class="config-group" style="margin-top: 10px;">
                                 <strong>📈 ボーダー圏内の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位の1個下と比較）</span></strong>
                                 <div class="radio-group">
-                                    <label><input type="radio" name="aboveMode" value="none" checked onchange="updateAll()"> 自チームとボーダー点差のみ表示</label>
-                                    <label><input type="radio" name="aboveMode" value="between" onchange="updateAll()"> ボーダーまでの全チームを表示</label>
-                                    <label><input type="radio" name="aboveMode" value="both" onchange="updateAll()"> 全チームと指定点差内のチームを表示</label>
+                                    <label><input type="radio" name="aboveMode" value="none" checked onchange="updateAll(event)"> 自チームとボーダー点差のみ表示</label>
+                                    <label><input type="radio" name="aboveMode" value="between" onchange="updateAll(event)"> ボーダーまでの全チームを表示</label>
+                                    <label><input type="radio" name="aboveMode" value="both" onchange="updateAll(event)"> ボーダーまでの全チームとボーダー外の指定点差内のチームを表示</label>
                                 </div>
                             </div>
                             <div class="config-group">
                                 <strong>📉 ボーダー圏外の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位と比較）</span></strong>
                                 <div class="radio-group">
-                                    <label><input type="radio" name="belowMode" value="none" checked onchange="updateAll()"> 自チームとボーダー点差のみ表示</label>
-                                    <label><input type="radio" name="belowMode" value="between" onchange="updateAll()"> ボーダーまでの全チームを表示</label>
-                                    <label><input type="radio" name="belowMode" value="both" onchange="updateAll()"> 全チームと指定点差内のチームを表示</label>
+                                    <label><input type="radio" name="belowMode" value="none" checked onchange="updateAll(event)"> 自チームとボーダー点差のみ表示</label>
+                                    <label><input type="radio" name="belowMode" value="between" onchange="updateAll(event)"> ボーダーまでの全チームを表示</label>
+                                    <label><input type="radio" name="belowMode" value="both" onchange="updateAll(event)"> ボーダーまでの全チームとボーダー内の指定点差内のチームを表示</label>
                                 </div>
                             </div>
                             <div class="config-group">
                                 <strong>📏 点差指定</strong>
-                                自チームからの点差: <input type="number" id="threshold" value="10" min="0" style="width: 50px;" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll()"> 点以内を表示対象とする
+                                自チームからの点差: <input type="number" id="threshold" value="10" min="0" style="width: 50px;" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll(event)"> 点以内を表示対象とする
                             </div>
-                        </div>
+                        </details>
                     </details>
                 </div>
             </div>
 
             <div class="card">
-                <label>📜 レース履歴修正</label>
+                <label>📜 レース履歴</label>
                 <div id="historyContainer" class="history-container"></div>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="toast"></div>
+    <div id="toast" class="toast">
+        <div id="toastMessage" style="position:relative; z-index:2;"></div>
+        <div id="toastProgressBar"></div>
+    </div>
 
     <script>
         let raceHistory = []; 
@@ -271,75 +669,128 @@
             {a: 'd', n: 'D', c: 0}, {a: 'f', n: 'F', c: 0}, {a: 'g', n: 'G', c: 0}, {a: 'h', n: 'H', c: 0}
         ];
 
+        // ▼ コース辞書の基本データ
         const courseBaseData = [
-            { id: 'mariob', full: 'マリオブラザーズサーキット', abbr: 'マリブサ', enAbbr: 'MBC', inputs: ['mariob', 'まりおｂ', 'marib', 'まりｂ','mb','MB'] },
-            { id: 'tor', full: 'トロフィーシティー', abbr: 'トロフィー', enAbbr: 'CC', inputs: ['tor', 'とｒ','cci',"CCI",'CCi'] },
-            { id: 'syu', full: 'シュポポコースター', abbr: 'シュポコ', enAbbr: 'WS', inputs: ['syu', 'しゅ', 'shu','wsu','WSU','WSu'] },
-            { id: 'dku', full: 'DKうちゅうセンター', abbr: 'DK宇宙', enAbbr: 'DKS', inputs: ['dku', 'ｄｋう', 'ｄく', 'DKu', 'DKう', 'DKU','dksp','DKSP','DKSp'] },
-            { id: 'sa', full: 'サンサンさばく', abbr: 'サンさば', enAbbr: 'rDH', inputs: ['sa', 'さ','rdh','rDH','RDH'] },
-            { id: 'he', full: 'ヘイホーカーニバル', abbr: 'ヘイカニ', enAbbr: 'rSGB', inputs: ['he', 'へ','rsg','rSG','RSG'] },
-            { id: 'wariosu', full: 'ワリオスタジアム', abbr: 'ワリスタ', enAbbr: 'rWS', inputs: ['wariosu', 'わりおす', 'warisu', 'わりす','rwst','rWST','RWST','RWSt','wst','WST','WSt'] },
-            { id: 'kir', full: 'キラーシップ', abbr: 'キラシ', enAbbr: 'rAF', inputs: ['kir', 'きｒ','ra','rA','RA','AF','af'] },
-            { id: 'dksu', full: 'DKスノーマウンテン', abbr: 'DKスノ', enAbbr: 'rDKP', inputs: ['dksu', 'DKsu', 'ｄｋす', 'DKす', 'DKSU','dkp','DKP','rdk','rDK','RDK'] },
-            { id: 'ro', full: 'ロゼッタてんもんだい', abbr: 'ロゼてん', enAbbr: 'SP', inputs: ['ro', 'ろ','sp','SP'] },
-            { id: 'ai', full: 'アイスビルディング', abbr: 'アイビル', enAbbr: 'rSHS', inputs: ['ai', 'あい','shs','SHS','rsh','rSH','RSH'] },
-            { id: 'wariosi', full: 'ワリオシップ', abbr: 'ワリシ', enAbbr: 'rWSh', inputs: ['wariosi','wariosh', 'わりおし', 'warisi', 'warish','わりし','rwsh','rWSh','RWSH','RWSh','wsh','WSH','WSh'] },
-            { id: 'no', full: 'ノコノコビーチ', abbr: 'ノコビ', enAbbr: 'rKTB', inputs: ['no', 'の','rk','rK','RK','kt','KT'] },
-            { id: 'ri', full: 'リバーサイドサファリ', abbr: 'リバサ', enAbbr: 'FO', inputs: ['ri', 'り','fo','FO'] },
-            { id: 'pi-tis', full: 'ピーチスタジアム', abbr: 'ピチスタ', enAbbr: 'PS', inputs: ['pi-tis', 'pi-chis', 'ぴーちｓ', 'pitis', 'pichis', 'ぴちｓ','ps','PS'] },
-            { id: 'pi-chib', full: 'ピーチビーチ', abbr: 'ピチビ', enAbbr: 'rPB', inputs: ['pi-chib', 'pi-tib', 'ぴーちｂ', 'pitib', 'pichib', 'ぴちｂ','pb','PB','rp','rPB','RPB'] },
-            { id: 'so', full: 'ソルティータウン', abbr: 'ソルティー', enAbbr: 'SSS', inputs: ['so', 'そ','ss','SS'] },
-            { id: 'dh', full: 'ディノディノジャングル', abbr: 'ディノディノ', enAbbr: 'rDDJ', inputs: ['de','dh', 'で', 'ｄｈ','ddj','DDJ','rdd','rDD','RDD'] },
-            { id: 'ha', full: 'ハテナしんでん', abbr: 'ハテしん', enAbbr: 'GBR', inputs: ['ha', 'は','g','G'] },
-            { id: 'pu', full: 'プクプクフォールズ', abbr: 'プクフォ', enAbbr: 'CCF', inputs: ['pu', 'ぷ','ccf','CCF',] },
-            { id: 'syo', full: 'ショーニューロード', abbr: 'ショーニュー', enAbbr: 'DD', inputs: ['syo', 'sho','dde','DDE','DDe'] },
-            { id: 'o', full: 'おばけシネマ', abbr: 'おばシネ', enAbbr: 'BCi', inputs: ['o', 'お','bci','BCi','BCI'] },
-            { id: 'ho', full: 'ホネホネツイスター', abbr: 'ホネツイ', enAbbr: 'DBB', inputs: ['ho', 'ほ','db','DB'] },
-            { id: 'mo', full: 'モーモーカントリー', abbr: 'モモカン', enAbbr: 'rMMM', inputs: ['mo', 'も', 'rm','rM','RM'] },
-            { id: 'ty', full: 'チョコマウンテン', abbr: 'チョコマ', enAbbr: 'rCM', inputs: ['ty', 'ch', 'ｔｙ', 'ｃｈ','rc','RC','rC','cm','CM'] },
-            { id: 'kin', full: 'キノピオファクトリー', abbr: 'キノファク', enAbbr: 'rTF', inputs: ['kin', 'きｎ','tf','TF','rt','rT','RT'] },
-            { id: 'ku', full: 'クッパキャッスル', abbr: 'クパキャ', enAbbr: 'BC', inputs: ['ku', 'く','bca','BCA','BCa'] },
-            { id: 'do', full: 'どんぐりツリーハウス', abbr: 'ドンつり', enAbbr: 'AH', inputs: ['do', 'ど','ah','AH'] },
-            { id: 'marios', full: 'マリオサーキット', abbr: 'マリサ', enAbbr: 'MC', inputs: ['marios', 'まりおｓ', 'maris', 'まりｓ','mc','MC'] },
-            { id: 're', full: 'レインボーロード', abbr: '虹', enAbbr: 'RR', inputs: ['re', 'れ', 'ni', 'に','rr','RR'] },
+            { id: 'mariob', full: 'マリオブラザーズサーキット', abbr: 'マリブサ', enAbbr: 'MBC', inputs: ['mariob', 'まりおｂ','まりおぶ', 'marib', 'まりｂ','まりぶ','mb','bura','sa-kitto','さーきっと','circuit','bro'] },
+            { id: 'tor', full: 'トロフィーシティー', abbr: 'トロフィー', enAbbr: 'CC', inputs: ['tor', 'とｒ','とろ','cci','っし','cr','cit','しｔ'] },
+            { id: 'syu', full: 'シュポポコースター', abbr: 'シュポコ', enAbbr: 'WS', inputs: ['syu', 'しゅ','しゅｐ','しゅぽ', 'shu','sixu','shixyu','silyu','shilyu','cixyu','cilyu','ko-','co-','こー','wsu','ｗす','kis','きｓ','汽','汽ｓ','きし','汽車','wh','sum','すｍ'] },
+            { id: 'dku', full: 'DKうちゅうセンター', abbr: 'DK宇宙', enAbbr: 'DKS', inputs: ['dku', 'ｄｋう', 'ｄく', 'DKU','dksp','ut','うｔ','uc','うｃ','うち','se','ce','せ','せｎ','せん','宇','宇宙'] },
+            { id: 'sa', full: 'サンサンさばく', abbr: 'サンさば', enAbbr: 'rDH', inputs: ['san', 'さｎ','さん','sab','さｂ','さば','rdh','すな','砂','des','hil','でｓ','ひｌ'] },
+            { id: 'he', full: 'ヘイホーカーニバル', abbr: 'ヘイカニ', enAbbr: 'rSGB', inputs: ['he', 'へ','へい','rsg','ka-','ca-','かー','shy','baz','car','ばｚ','かｒ'] },
+            { id: 'wariosu', full: 'ワリオスタジアム', abbr: 'ワリスタ', enAbbr: 'rWS', inputs: ['wariosu', 'わりおす', 'warisu', 'わりす','rwst','wst','sutajiamu','sutaziamu','すたじあむ','stadium'] },
+            { id: 'kir', full: 'キラーシップ', abbr: 'キラシ', enAbbr: 'rAF', inputs: ['kir', 'きｒ','きら','raf','らｆ','af','ship','sippu','cippu','しｐ','しっぷ','air','あいｒ'] },
+            { id: 'dksu', full: 'DKスノーマウンテン', abbr: 'DKスノ', enAbbr: 'rDKP', inputs: ['dksu', 'DKす', 'DKす','DKSU','dkp','rdk','suno','すの','yu','ゆ','ゆｋ','ゆき','雪','pa','ぱ','ぱｓ','ぱす'] },
+            { id: 'ro', full: 'ロゼッタてんもんだい', abbr: 'ロゼてん', enAbbr: 'SP', inputs: ['ro', 'ろ','ろｚ','ろぜ','sp','te','て','てｎ','てん','天','star','ｓたｒ'] },
+            { id: 'ai', full: 'アイスビルディング', abbr: 'アイビル', enAbbr: 'rSHS', inputs: ['ais', 'あい','shs','rsh','bir','びｒ','びる','ic','sky'] },
+            { id: 'wariosi', full: 'ワリオシップ', abbr: 'ワリシ', enAbbr: 'rWSh', inputs: ['wariosi','wariosh','warioci', 'わりおし', 'warisi','warici', 'warish','わりし','rwsh','wsh','WSH','ship','sippu','cippu','しｐ','しっぷ'] },
+            { id: 'no', full: 'ノコノコビーチ', abbr: 'ノコビ', enAbbr: 'rKTB', inputs: ['no', 'の','のｋ','のこ','rk','rK','kt','kam','kih','かｍ','かめ','亀','koo','こお','bi-ti','bi-chi','びーち','beach','べあｃｈ'] },
+            { id: 'ri', full: 'リバーサイドサファリ', abbr: 'リバサ', enAbbr: 'FO', inputs: ['ri', 'り','りｂ','りば','fo','ふぉ','saf','sah','さｆ','さｈ','さふ','far','oa','おあ','ふぁｒ'] },
+            { id: 'pi-tis', full: 'ピーチスタジアム', abbr: 'ピチスタ', enAbbr: 'PS', inputs: ['pi-tis', 'pi-chis', 'ぴーちｓ','ぴーちす', 'pitis', 'pichis', 'ぴちｓ','ぴちす','ps','momos','ももｓ','ももす','桃ｓ','桃す','sutajiamu','sutaziamu','すたじあむ','stadium','peachs','ぺあｃｈｓ'] },
+            { id: 'pi-chib', full: 'ピーチビーチ', abbr: 'ピチビ', enAbbr: 'rPB', inputs: ['pi-chib', 'pi-tib', 'ぴーちｂ','ぴーちび', 'pitib', 'pichib', 'ぴちｂ','ぴちび','pb','rp','momoh','ももｈ','ももは','桃ｈ','桃は','桃浜','bi-ti','bi-chi','びーち','beach','べあｃｈ','peachb','ぺあｃｈｂ'] },
+            { id: 'so', full: 'ソルティータウン', abbr: 'ソルティー', enAbbr: 'SSS', inputs: ['so', 'そ','そｒ','そる','ss','ta','た','たう','sal','さｌ'] },
+            { id: 'dh', full: 'ディノディノジャングル', abbr: 'ディノディノ', enAbbr: 'rDDJ', inputs: ['de','dh', 'で','でぃ', 'ddj','rdd','j','ja','di','じゃ','ぢ','ぢｎ'] },
+            { id: 'ha', full: 'ハテナしんでん', abbr: 'ハテしん', enAbbr: 'GBR', inputs: ['ha', 'は','はｔ','はて','g','gb','sinn','sind','shinn','shind','cinn','cind','しんｄ','しんで','?','？','神','神ｄ','神で','gr','bl'] },
+            { id: 'pu', full: 'プクプクフォールズ', abbr: 'プクフォ', enAbbr: 'CCF', inputs: ['pu', 'ぷ','ぷｋ','ぷく','ccf','che','ちぇ'] },
+            { id: 'syo', full: 'ショーニューロード', abbr: 'ショーニュー', enAbbr: 'DD', inputs: ['syo', 'sho','sixo','shixyo','silyo','shilyo','cixyo','cilyo','しょ','鍾','鍾ｎ','鍾に','dde','da','っで','だ','だｎ'] },
+            { id: 'o', full: 'おばけシネマ', abbr: 'おばシネ', enAbbr: 'BCi', inputs: ['o', 'お','ob','おｂ','おば','bci','ｂし','sine','shine','cine','ba','ば','ばｋ','ばけ','しね','boo','ぼお'] },
+            { id: 'ho', full: 'ホネホネツイスター', abbr: 'ホネツイ', enAbbr: 'DBB', inputs: ['ho', 'ほ','ほｎ','ほね','骨','db','tui','tsui','つい','dr','bon','burn','ぼｎ','ぶｒｎ'] },
+            { id: 'mo', full: 'モーモーカントリー', abbr: 'モモカン', enAbbr: 'rMMM', inputs: ['mo-', 'もー','momok','ももｋ','ももか','momoc','ももｃ','桃ｋ','ももか','kan','かｎ','かん','can', 'rm','mm','usi','ushi','uci','うし','牛','moo','mea','もお','めあ'] },
+            { id: 'ty', full: 'チョコマウンテン', abbr: 'チョコマ', enAbbr: 'rCM', inputs: ['tyo','cho','cyo','rc','cm','ち','ちょ'] },
+            { id: 'kin', full: 'キノピオファクトリー', abbr: 'キノファク', enAbbr: 'rTF', inputs: ['kin', 'きｎ','fac','fak','hula','fula','huxa','fuxa','ふぁｋ','ふぁｃ','kou','cou','こう','工','tf','rt','toa','とあ'] },
+            { id: 'ku', full: 'クッパキャッスル', abbr: 'クパキャ', enAbbr: 'BC', inputs: ['ku','cu','qu','く','くｐ','くっ','ky','kixya','kilya','bca','bow','cas','ｂか','ぼｗ','かｓ'] },
+            { id: 'do', full: 'どんぐりツリーハウス', abbr: 'ドンつり', enAbbr: 'AH', inputs: ['do', 'ど','どｎ','どん','tur','tsur','つｒ','つり','ah','団','栗','ac'] },
+            { id: 'marios', full: 'マリオサーキット', abbr: 'マリサ', enAbbr: 'MC', inputs: ['marios', 'まりおｓ','まりおさ', 'maris', 'まりｓ','まりさ','mc','sa-kitto','さーきっと', 'circuit'] },
+            { id: 're', full: 'レインボーロード', abbr: '虹', enAbbr: 'RR', inputs: ['re', 'れ','れい','虹','にｊ','にじ', 'ni', 'に','rr','rai','らい'] },
         ];
 
         let courseDictionary = {};
+        let userCustomTrigger = {};
         let userCustomAbbr = {};
 
         let lastCopiedResult = "";
         let skipAutoCopy = true; 
 
+        
+
         window.onload = () => { 
-            loadData(); 
-            buildTeamInputs(); 
-            buildCustomAbbrInputs();
-            updateCourseDictionary();
-            setTimeout(() => { skipAutoCopy = false; }, 500); 
+            try {
+                loadData(); 
+                buildTeamInputs(); 
+                buildCustomAbbrInputs();
+                updateCourseDictionary();
+                setTimeout(() => { 
+                    if (typeof skipAutoCopy !== 'undefined') skipAutoCopy = false; 
+                    else window.skipAutoCopy = false;
+                }, 500); 
+
+                let filledCount = 0;
+                for (let i = 0; i < 24; i++) {
+                    const input = document.getElementById(`newRaceInput_${i}`);
+                    if (input && input.value.trim() !== '') {
+                        filledCount++;
+                    }
+                }
+                
+                // もし再読み込みした時点で24枠すべて埋まっていたら
+                if (filledCount === 24) {
+                    // 変数が未定義でエラーになって停止するのを防ぐため、windowオブジェクトにセットするか存在確認をする
+                    if (typeof isErrorMode !== 'undefined') isErrorMode = true;
+                    else window.isErrorMode = true;
+                    
+                    if (typeof hasAttemptedAutoAdd !== 'undefined') hasAttemptedAutoAdd = true;
+                    else window.hasAttemptedAutoAdd = true;
+                    
+                    const btn = document.getElementById('btnAddRace');
+                    if (btn) btn.style.display = 'block'; // ボタンを表示したままにする
+                }
+            } catch (error) {
+                // 万が一別のエラーが起きても、ここでキャッチして画面のフリーズを防ぎます
+                console.error("再読み込み時の復元中にエラーが発生しましたが、処理を継続します:", error);
+            }
         };
 
-        function updateCourseDictionary() {
-            courseDictionary = {};
-            courseBaseData.forEach(course => {
-                const userAbbr = userCustomAbbr[course.id] || course.abbr;
-                course.inputs.forEach(input => {
-                    courseDictionary[input] = { full: course.full, abbr: userAbbr, enAbbr: course.enAbbr };
-                });
-            });
-        }
+        // 使い方・説明の開閉状態をブラウザに保存・復元する処理
+        window.addEventListener('DOMContentLoaded', () => {
+            // リセット直後かどうかを確認する
+            const isResetting = sessionStorage.getItem('isResetting') === 'true';
+            
+            if (isResetting) {
+                // 確認したら証拠を消し、念のためもう一度ストレージを空にする
+                sessionStorage.removeItem('isResetting');
+                localStorage.clear();
+            }
 
-        function buildCustomAbbrInputs() {
-            const container = document.getElementById('customAbbrContainer');
-            container.innerHTML = "";
-            courseBaseData.forEach(course => {
-                const val = userCustomAbbr[course.id] || course.abbr;
-                container.innerHTML += `<div class="custom-input-row">
-                    <span>${course.full}</span>
-                    <input type="text" value="${val}" oninput="userCustomAbbr['${course.id}']=this.value; updateCourseDictionary(); saveData();">
-                </div>`;
-            });
-        }
+            document.querySelectorAll('details').forEach((el, index) => {
+                const id = el.id || `details-auto-${index}`;
+                el.id = id;
 
+                // ★リセット直後なら、ブラウザの復元を無視して強制的に閉じる
+                if (isResetting) {
+                    el.removeAttribute('open');
+                    el.open = false;
+                } else {
+                    // 通常時の読み込み処理
+                    const savedState = localStorage.getItem(id);
+                    if (savedState === 'true') {
+                        el.open = true;
+                    } else if (savedState === 'false') {
+                        el.open = false;
+                    }
+                }
+
+                // ★超重要：ブラウザの勝手な復元による「誤保存」を防ぐため、
+                // ページ読み込みから0.5秒間は保存機能をオンにしない（遅延登録）
+                setTimeout(() => {
+                    el.addEventListener('toggle', () => {
+                        localStorage.setItem(id, el.open);
+                    });
+                }, 500);
+            });
+        });
+
+        let lastValidAbbrs = []; // 各チームの「最新の有効な入力文字」を記憶する配列
+
+        // チーム設定の入力枠を生成
         function buildTeamInputs() {
             const count = parseInt(document.getElementById('teamCountSelect').value);
             const container = document.getElementById('teamInputsContainer');
@@ -348,19 +799,217 @@
             }));
             window.savedTeams = null;
             container.innerHTML = "";
+            lastValidAbbrs = []; // 初期化
+            
             for (let i = 0; i < count; i++) {
                 const d = oldData[i] || defaultTeamData[i] || {a: '', n: '', c: 0};
+                lastValidAbbrs[i] = d.a; // 初期値を記憶しておく
                 const colorInfo = teamColors[i % teamColors.length];
+                
                 container.innerHTML += `<div class="team-input-row">
-                    <input type="text" class="abbr" value="${d.a}" oninput="updateMyTeamList()">
-                    <input type="text" class="name" value="${d.n}" oninput="updateMyTeamList()" style="background-color: ${colorInfo.bg}; color: ${colorInfo.fg};">
-                    <input type="number" class="correction" value="${d.c}" onchange="updateAll()">
+                    <input type="text" class="abbr" id="teamAbbr_${i}" value="${d.a}" oninput="handleAbbrInput(event, ${i})" onkeydown="handleTeamInputKeydown(event, ${i}, 'abbr')">
+                    <input type="text" class="name" id="teamName_${i}" value="${d.n}" oninput="updateMyTeamList(event)" style="background-color: ${colorInfo.bg}; color: ${colorInfo.fg};" onkeydown="handleTeamInputKeydown(event, ${i}, 'name')">
+                    <input type="number" class="correction" value="${d.c}" onchange="updateAll(event)" onkeydown="handleTeamInputKeydown(event, ${i}, 'correction')">
                 </div>`;
             }
+
+            document.querySelectorAll('.team-input-row .name').forEach(el => {
+                el.addEventListener('input', () => {
+                    saveData();
+                    refreshAllOverlays(); 
+                });
+            });
+
             updateMyTeamList();
         }
 
-        function updateMyTeamList() {
+        //入力枠のオーバーレイを再描画
+        function refreshAllOverlays() {
+            for (let i = 0; i < 24; i++) {
+                const inputEl = document.getElementById(`newRaceInput_${i}`);
+                if (!inputEl) continue;
+
+                const val = inputEl.value.trim();
+                const overlay = inputEl.nextElementSibling; // 入力枠の隣にあるオーバーレイ要素
+
+                // 他のファイルにあるはずの「入力文字からチーム情報を探す関数」を使って判定
+                const matched = typeof getTeamByAbbr === 'function' ? getTeamByAbbr(val) : null;
+
+                if (overlay && overlay.classList.contains('team-overlay')) {
+                    if (matched) {
+                        // 一致するチームがあれば、色と名前を最新状態に更新する
+                        overlay.innerText = matched.name;
+                        overlay.style.backgroundColor = matched.bg;
+                        overlay.style.color = matched.fg;
+                        overlay.style.opacity = '1';
+                        
+                        // 入力文字を隠してオーバーレイを見せるスタイル調整
+                        inputEl.style.backgroundColor = 'transparent';
+                        inputEl.style.color = 'transparent';
+                        inputEl.style.caretColor = '#000';
+                    } else {
+                        // チームが空欄や未定義の場合はオーバーレイを隠す
+                        overlay.style.opacity = '0';
+                        inputEl.style.backgroundColor = '';
+                        inputEl.style.color = '';
+                    }
+                }
+            }
+        }
+
+        // 入力文字の書き換え
+        function handleAbbrInput(e, idx) {
+            // ★追加：入力された半角・全角スペースをすべて削除して入力枠に反映
+            e.target.value = e.target.value.replace(/[\s　]+/g, '');
+            const newAbbr = e.target.value.trim();
+            let historyChanged = false;
+            
+            // バックスペースで空欄になった時は無視し、文字が入っている時だけ処理する
+            if (newAbbr !== "") {
+                const oldAbbr = lastValidAbbrs[idx];
+                
+                // 前の文字と違っている場合のみ処理を実行
+                if (oldAbbr && oldAbbr !== newAbbr) {
+                    
+                    // 過去の「レース履歴」データの書き換え
+                    if (raceHistory.length > 0) {
+                        raceHistory.forEach(race => {
+                            let tokens = race.teams.split(' ');
+                            let updated = false;
+                            for (let i = 0; i < tokens.length; i++) {
+                                if (tokens[i] === oldAbbr) {
+                                    tokens[i] = newAbbr;
+                                    updated = true;
+                                }
+                            }
+                            if (updated) {
+                                race.teams = tokens.join(' ');
+                                historyChanged = true;
+                            }
+                        });
+                    }
+
+                    // 現在入力中の「レース情報（24枠）」の書き換え
+                    for (let i = 0; i < 24; i++) {
+                        const input = document.getElementById(`newRaceInput_${i}`);
+                        if (input && input.value.trim() === oldAbbr) {
+                            input.value = newAbbr;
+                            // 色やチーム名（オーバーレイ）の表示も即座に更新する
+                            if (typeof handleInputBlur === 'function') {
+                                handleInputBlur({ target: input });
+                            }
+                        }
+                    }
+                }
+                
+                // 最新の文字として記憶を更新
+                lastValidAbbrs[idx] = newAbbr;
+            }
+
+            // 履歴が書き換わった場合は、画面の履歴リストも再描画する
+            if (historyChanged) {
+                renderHistory();
+            }
+            
+            // 全体のチームリストと集計を更新
+            updateMyTeamList(e);
+            
+            // 文字を変更したことでエラーが解消（または発生）したか判定させる
+            if (typeof checkAutoAdd === 'function') {
+                checkAutoAdd();
+            }
+        }
+
+        /*
+        function handleAbbrChange(e) {
+            const inputEl = e.target;
+            const oldAbbr = inputEl.getAttribute('data-focus') || "";
+            const newAbbr = inputEl.value.trim();
+
+            // 前の文字と今の文字が違っていて、かつ空文字でない場合に履歴を置換する
+            if (oldAbbr && oldAbbr !== newAbbr && raceHistory.length > 0) {
+                raceHistory.forEach(race => {
+                    for (let i = 0; i < race.teams.length; i++) {
+                        if (race.teams[i] === oldAbbr) {
+                            race.teams[i] = newAbbr;
+                        }
+                    }
+                });
+                renderHistory(); // 履歴画面を更新
+                updateAll();     // 集計結果も更新
+            }
+            // 次の変更のために現在の文字を記憶しておく
+            inputEl.setAttribute('data-focus', newAbbr);
+        }*/
+
+        // チーム設定の矢印キー設定
+        function handleTeamInputKeydown(e, index, field) {
+            const rows = document.querySelectorAll('.team-input-row');
+            const maxIndex = rows.length - 1;
+
+            // 上下移動のルール（名前・略称は常にOK、点数補正はShift時のみOK）
+            const isUpDown = (e.key === "ArrowUp" || e.key === "ArrowDown") && 
+                            (field !== 'correction' || e.shiftKey);
+                            
+            // 左右移動のルール（Shift時のみOK）
+            const isLeftRightWithShift = e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight");
+
+            if (isUpDown || isLeftRightWithShift) {
+                e.preventDefault(); 
+                
+                let targetIndex = index;
+                let targetField = field;
+
+                if (e.key === "ArrowUp") {
+                    targetIndex = Math.max(0, index - 1);
+                } else if (e.key === "ArrowDown") {
+                    targetIndex = Math.min(maxIndex, index + 1);
+                } else if (e.key === "ArrowLeft") {
+                    if (field === 'correction') {
+                        targetField = 'name';
+                    } else if (field === 'name') {
+                        targetField = 'abbr';
+                    }
+                    // ★ここにあった「abbrから左へ行こうとすると、上の行のcorrectionへ移動する処理」を削除しました（左端でストップします）
+
+                } else if (e.key === "ArrowRight") {
+                    if (field === 'abbr') {
+                        targetField = 'name';
+                    } else if (field === 'name') {
+                        targetField = 'correction';
+                    }
+                    // ★ここにあった「correctionから右へ行こうとすると、下の行のabbrへ移動する処理」を削除しました（右端でストップします）
+                }
+
+                if (targetIndex !== index || targetField !== field) {
+                    const targetInput = rows[targetIndex].querySelector(`.${targetField}`);
+                    if (targetInput) {
+                        targetInput.focus();
+                        
+                        // カーソルを右端（末尾）に移動させる処理
+                        if (targetInput.type === 'number') {
+                            // number型は通常のカーソル移動命令が使えないため、値を一瞬入れ直して右端に寄せる
+                            const val = targetInput.value;
+                            targetInput.value = '';
+                            targetInput.value = val;
+                        } else if (targetInput.type === 'text' || targetInput.type === 'search') {
+                            const len = targetInput.value.length;
+                            targetInput.setSelectionRange(len, len);
+                        }
+                    }
+                }
+            }
+        }
+
+        // チーム名変更時の自チーム選択のドロップリストを更新
+        function updateMyTeamList(e) {
+            validateAbbrs();
+            
+            // チーム名が変更された時はリアルタイムで履歴画面を再描画する
+            if (e && e.target && e.target.classList.contains('name')) {
+                renderHistory();
+            }
+
             const select = document.getElementById('myTeamSelect');
             const current = select.value;
             select.innerHTML = '<option value="">(なし)</option>';
@@ -368,12 +1017,127 @@
                 const n = row.querySelector('.name').value;
                 if(n) select.innerHTML += `<option value="${n}" ${n===current?'selected':''}>${n}</option>`;
             });
-            updateAll();
+            updateAll(e);
         }
 
+        //
+        
+
+        
+        // チーム設定（入力文字とチーム名）のエラーをチェックする
+        function validateAbbrs() {
+            const rows = document.querySelectorAll('.team-input-row');
+            const errorMsgDiv = document.getElementById('abbrErrorMessage');
+            
+            // エラーフラグ
+            let abbrErrors = { duplicate: false, prefix: false, empty: false };
+            let nameErrors = { duplicate: false, empty: false }; // ← ★empty（空欄）を追加
+
+            // 全ての入力欄のエラー枠を一旦リセット
+            rows.forEach(row => {
+                row.querySelector('.abbr').style.outline = 'none';
+                row.querySelector('.name').style.outline = 'none';
+            });
+            if (errorMsgDiv) errorMsgDiv.style.display = 'none';
+
+            let errorElements = new Set();
+
+            // データの収集
+            const teamData = Array.from(rows).map(row => ({
+                abbr: row.querySelector('.abbr').value.trim(),
+                name: row.querySelector('.name').value.trim(),
+                abbrEl: row.querySelector('.abbr'),
+                nameEl: row.querySelector('.name')
+            }));
+
+            // 入力文字（略称）のチェック
+            for (let i = 0; i < teamData.length; i++) {
+                const a = teamData[i];
+                if (a.abbr === '') {
+                    abbrErrors.empty = true;
+                    errorElements.add(a.abbrEl);
+                }
+                for (let j = i + 1; j < teamData.length; j++) {
+                    const b = teamData[j];
+                    if (a.abbr === '' || b.abbr === '') continue;
+                    if (a.abbr === b.abbr) {
+                        abbrErrors.duplicate = true;
+                        errorElements.add(a.abbrEl);
+                        errorElements.add(b.abbrEl);
+                    } else if (a.abbr.startsWith(b.abbr) || b.abbr.startsWith(a.abbr)) {
+                        abbrErrors.prefix = true;
+                        errorElements.add(a.abbrEl);
+                        errorElements.add(b.abbrEl);
+                    }
+                }
+            }
+
+            // チーム名のチェック
+            for (let i = 0; i < teamData.length; i++) {
+                const a = teamData[i];
+                
+                // チーム名が空欄の場合
+                if (a.name === '') {
+                    nameErrors.empty = true;
+                    errorElements.add(a.nameEl);
+                }
+
+                for (let j = i + 1; j < teamData.length; j++) {
+                    const b = teamData[j];
+                    if (a.name === '' || b.name === '') continue;
+                    if (a.name === b.name) {
+                        nameErrors.duplicate = true;
+                        errorElements.add(a.nameEl);
+                        errorElements.add(b.nameEl);
+                    }
+                }
+            }
+
+            // 警告の表示処理
+            if (errorElements.size > 0) {
+                // エラー箇所に赤い枠線をつける（2pxの太さの赤い実線）
+                errorElements.forEach(el => el.style.outline = '1.5px solid red');
+                
+                if (errorMsgDiv) {
+                    let abbrMsgs = [];
+                    if (abbrErrors.empty) abbrMsgs.push('未入力の箇所があります');
+                    if (abbrErrors.duplicate) abbrMsgs.push('入力文字が重複しています');
+                    if (abbrErrors.prefix) abbrMsgs.push('チームの判別がつかない入力文字があります');
+
+                    let nameMsgs = [];
+                    // ★追加：チーム名空欄のメッセージ
+                    if (nameErrors.empty) nameMsgs.push('未入力の箇所があります'); 
+                    if (nameErrors.duplicate) nameMsgs.push('チーム名が重複しています');
+
+                    // ▼ 縦に並べるための指定（flex-direction: column;）を追加し、隙間（gap）を8pxに調整しました
+                    let html = '<div style="display: flex; flex-direction: column; gap: 8px; text-align: left; width: fit-content; ">';                    
+                    if (abbrMsgs.length > 0) html += `<div>【入力文字のエラー】<br>${abbrMsgs.join('<br>')}</div>`;
+                    if (nameMsgs.length > 0) html += `<div>【チーム名のエラー】<br>${nameMsgs.join('<br>')}</div>`;
+                    html += '</div>';
+                    
+                    errorMsgDiv.innerHTML = html;
+                    errorMsgDiv.style.display = 'block';
+                }
+            }
+
+            // チーム設定が変更されたタイミングで、新規入力枠とすべての過去履歴の警告を再計算して表示を更新する
+            if (typeof validateNewRaceAbbrs === 'function') {
+                validateNewRaceAbbrs();
+            }
+            if (typeof raceHistory !== 'undefined') {
+                for (let i = 0; i < raceHistory.length; i++) {
+                    if (typeof validateHistoryAbbrs === 'function') {
+                        validateHistoryAbbrs(i);
+                    }
+                }
+            }
+        }
+
+    
+        // 周回と道中を切り替える
         function toggleCourseInput() {
             const isSection = document.querySelector('input[name="courseType"]:checked').value === 'section';
-            document.getElementById('courseName1').placeholder = isSection ? "始点" : "コース名";
+            document.getElementById('courseName1').placeholder = isSection ? "コース名（始点）" : "コース名";
             document.getElementById('courseSeparator').style.display = isSection ? "inline" : "none";
             document.getElementById('courseName2Wrapper').style.display = isSection ? "flex" : "none";
         }
@@ -394,7 +1158,9 @@
             }, 50);
         }
 
+        // コース入力欄をチェック
         function handleCourseInput(e, histIdx = null) {
+            e.target.value = e.target.value.replace(/[\s　]+/g, '');
             if (blockNextChar) { e.target.value = e.target.value.slice(0, -1); return; }
             if (e.inputType && e.inputType.includes('delete')) {
                 if (histIdx !== null) updateHistoryCourseAdvanced(histIdx);
@@ -416,27 +1182,142 @@
             }, 10);
         }
 
-        function showSuggest(inputElem) {
-            const val = inputElem.value.toLowerCase();
-            const suggestDivId = 'suggest_' + inputElem.id;
-            const suggestDiv = document.getElementById(suggestDivId);
-            if (!suggestDiv || val.length === 0) { hideSuggest(inputElem.id); return; }
+        // 辞書を2種類に分けて管理します
+        let defaultDictionary = {};
+        let customDictionary = {};
 
-            const matches = Object.keys(courseDictionary).filter(k => k.startsWith(val));
-            if (matches.length > 0) {
-                const uniqueResults = [...new Set(matches.map(m => courseDictionary[m].full))];
-                
-                if (uniqueResults.length === 1) {
-                    hideSuggest(inputElem.id); return;
+        // コース名の変換辞書を作成・更新
+        function updateCourseDictionary() {
+            defaultDictionary = {};
+            customDictionary = {};
+
+            function addEntry(dict, key, courseObj) {
+                if (!key) return;
+                const normKey = normalizeForCourse(key);
+                if (!dict[normKey]) dict[normKey] = [];
+                if (!dict[normKey].some(c => c.full === courseObj.full)) {
+                    const userAbbr = userCustomAbbr[courseObj.id] || courseObj.abbr;
+                    dict[normKey].push({ 
+                        full: courseObj.full, 
+                        abbr: userAbbr, 
+                        enAbbr: courseObj.enAbbr 
+                    });
                 }
-                
-                suggestDiv.innerHTML = uniqueResults.map((r, i) => `<div class="suggest-item" onclick="selectSuggest('${r}', '${inputElem.id}')">${r}</div>`).join('');
-                suggestDiv.style.display = 'block';
-            } else {
-                suggestDiv.style.display = 'none';
+            }
+
+            courseBaseData.forEach(course => {
+                // ① デフォルト（登録キー）の登録
+                course.inputs.forEach(input => {
+                    addEntry(defaultDictionary, input, course);
+                });
+
+                // ② カスタム（変換キー）の登録
+                const customTrigger = userCustomTrigger[course.id];
+                if (customTrigger && customTrigger.trim() !== "") {
+                    addEntry(customDictionary, customTrigger, course);
+                }
+            });
+        }
+        
+        // ユーザ辞書・略称変更枠を生成
+        function buildCustomAbbrInputs() {
+            const container = document.getElementById('customAbbrContainer');
+            if (!container) return;
+
+            // ★現在の開閉状態を記憶（すでに開いていたら true になる）
+            const existingDetails = container.querySelector('details');
+            const isOpen = existingDetails ? existingDetails.open : false;
+            const openAttr = isOpen ? 'open' : ''; // 開いていた場合は 'open' 属性を付与
+            
+            // JS側で details や summary、リセットボタンをすべて生成します
+            let html = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; background: #fff; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
+                <details style="flex: 1; outline: none;" ${openAttr}>
+                    <summary style="cursor: pointer; font-weight: bold; font-size: 14px; user-select: none; color: #333;">
+                        📝 変換キー・略称変更設定
+                    </summary>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-top: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+            `;
+            
+            courseBaseData.forEach((course, index) => {
+                const abbrVal = userCustomAbbr[course.id] || course.abbr;
+                const triggerVal = userCustomTrigger[course.id] || ""; 
+
+                html += `
+                <div class="custom-input-row" style="display: flex; align-items: center; gap: 20px;">
+                    <span style="width: 180px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #555;" >${course.full}</span>
+                    <input type="text" class="trigger-input" placeholder="変換キー" value="${triggerVal}" title="入力した文字をコース名に打つと${course.full}が出力されます" 
+                        oninput="userCustomTrigger['${course.id}']=this.value; updateCourseDictionary(); saveData();" onkeydown="handleCustomAbbrKeydown(event, ${index}, 'trigger')"
+                        style="width: 100px; padding: 4px 6px; border: 1px solid #bbb; border-radius: 4px; font-size: 12px;">
+                    <input type="text" class="abbr-input" placeholder="略称" value="${abbrVal}" title='略称表示選択時、${course.full}がこの略称で出力されます'
+                        oninput="userCustomAbbr['${course.id}']=this.value; updateCourseDictionary(); saveData();" onkeydown="handleCustomAbbrKeydown(event, ${index}, 'abbr')"
+                        style="width: 100px; padding: 4px 6px; border: 1px solid #bbb; border-radius: 4px; font-size: 12px;">
+                </div>`;
+            });
+            
+            html += `
+                    </div>
+                </details>
+                <button class="btn-reset-coursekey" style="margin-left: 15px; width: 180px; height: 30px; padding: 5px 10px; font-size: 12px ; color: #495057; border: 1px solid #ced4da; border-radius: 4px; cursor: pointer; white-space: nowrap;" onclick="resetCustomAbbrs()">
+                    変換キーと略称をリセット
+                </button>
+            </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // 変換キー略称リセット
+        function resetCustomAbbrs() {
+            if (confirm("変換キーと略称をすべて初期状態にリセットしますか？")) {
+                userCustomTrigger = {};
+                userCustomAbbr = {};
+                updateCourseDictionary();
+                saveData();
+                buildCustomAbbrInputs(); // 画面を再描画
             }
         }
 
+        // 変換キー略称矢印キー設定
+        function handleCustomAbbrKeydown(e, index, field) {
+            const rows = document.querySelectorAll('.custom-input-row');
+            const maxIndex = rows.length - 1;
+
+            // ▼ 上下キー：Shiftの有無に関わらず、常に上下の行へ移動
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                e.preventDefault(); 
+                let targetIndex = index;
+                if (e.key === "ArrowUp") targetIndex = Math.max(0, index - 1);
+                else if (e.key === "ArrowDown") targetIndex = Math.min(maxIndex, index + 1);
+                
+                if (targetIndex !== index) {
+                    const targetInput = rows[targetIndex].querySelector(`.${field}-input`);
+                    if (targetInput) {
+                        targetInput.focus();
+                        const len = targetInput.value.length;
+                        targetInput.setSelectionRange(len, len);
+                    }
+                }
+            } 
+            // ▼ 左右キー：Shiftを押している時だけ、変換キー⇔略称を移動
+            else if (e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+                e.preventDefault();
+                let targetField = field;
+                if (e.key === "ArrowLeft" && field === 'abbr') targetField = 'trigger';
+                else if (e.key === "ArrowRight" && field === 'trigger') targetField = 'abbr';
+                
+                if (targetField !== field) {
+                    const targetInput = rows[index].querySelector(`.${targetField}-input`);
+                    if (targetInput) {
+                        targetInput.focus();
+                        const len = targetInput.value.length;
+                        targetInput.setSelectionRange(len, len);
+                    }
+                }
+            }
+        }
+
+        // サジェストからの選択
         function selectSuggest(fullText, inputId) {
             const inputElem = document.getElementById(inputId);
             const mode = document.querySelector('input[name="courseAutoConvert"]:checked').value;
@@ -448,6 +1329,7 @@
                 inputElem.value = converted;
                 hideSuggest(inputId);
                 afterConversion(inputElem);
+                saveData();
                 
                 if (inputId.startsWith('hc')) {
                     const parts = inputId.split('_');
@@ -456,6 +1338,7 @@
             }
         }
 
+        // サジェストを隠す
         function hideSuggest(inputId = null) {
             if (inputId) {
                 const d = document.getElementById('suggest_' + inputId);
@@ -465,6 +1348,7 @@
             }
         }
 
+        // キーボード操作（矢印・エンター）
         function handleSuggestKeydown(e) {
             const inputElem = e.target;
             const suggestDiv = document.getElementById('suggest_' + inputElem.id);
@@ -495,32 +1379,212 @@
             }
         }
 
+        // 全角英数字を半角に、ひらがな・半角カタカナを全角カタカナに変換する関数
+        function normalizeForCourse(str) {
+            if (!str) return "";
+
+            // 1. 全角英数字を半角に（大文字小文字はそのまま区別する）
+            str = str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s) {
+                return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+            });
+
+            // 2. 全角スペースを半角スペースに
+            str = str.replace(/　/g, ' ');
+
+            // 3. ひらがなを全角カタカナに
+            str = str.replace(/[\u3041-\u3096]/g, function(match) {
+                return String.fromCharCode(match.charCodeAt(0) + 0x60);
+            });
+
+            // 4. 半角カタカナを全角カタカナに変換（濁点「ﾞ」・半濁点「ﾟ」をセットで処理）
+            const kanaMap = {
+                'ｶﾞ': 'ガ', 'ｷﾞ': 'ギ', 'ｸﾞ': 'グ', 'ｹﾞ': 'ゲ', 'ｺﾞ': 'ゴ',
+                'ｻﾞ': 'ザ', 'ｼﾞ': 'ジ', 'ｽﾞ': 'ズ', 'ｾﾞ': 'ゼ', 'ｿﾞ': 'ゾ',
+                'ﾀﾞ': 'ダ', 'ﾁﾞ': 'ヂ', 'ﾂﾞ': 'ヅ', 'ﾃﾞ': 'デ', 'ﾄﾞ': 'ド',
+                'ﾊﾞ': 'バ', 'ﾋﾞ': 'ビ', 'ﾌﾞ': 'ブ', 'ﾍﾞ': 'ベ', 'ﾎﾞ': 'ボ',
+                'ﾊﾟ': 'パ', 'ﾋﾟ': 'ピ', 'ﾌﾟ': 'プ', 'ﾍﾟ': 'ペ', 'ﾎﾟ': 'ポ',
+                'ｳﾞ': 'ヴ',
+                'ｱ': 'ア', 'ｲ': 'イ', 'ｳ': 'ウ', 'ｴ': 'エ', 'ｵ': 'オ',
+                'ｶ': 'カ', 'ｷ': 'キ', 'ｸ': 'ク', 'ｹ': 'ケ', 'ｺ': 'コ',
+                'ｻ': 'サ', 'ｼ': 'シ', 'ｽ': 'ス', 'ｾ': 'セ', 'ｿ': 'ソ',
+                'ﾀ': 'タ', 'ﾁ': 'チ', 'ﾂ': 'ツ', 'ﾃ': 'テ', 'ﾄ': 'ト',
+                'ﾅ': 'ナ', 'ﾆ': 'ニ', 'ﾇ': 'ヌ', 'ﾈ': 'ネ', 'ﾉ': 'ノ',
+                'ﾊ': 'ハ', 'ﾋ': 'ヒ', 'ﾌ': 'フ', 'ﾍ': 'ヘ', 'ﾎ': 'ホ',
+                'ﾏ': 'マ', 'ﾐ': 'ミ', 'ﾑ': 'ム', 'ﾒ': 'メ', 'ﾓ': 'モ',
+                'ﾔ': 'ヤ', 'ﾕ': 'ユ', 'ﾖ': 'ヨ',
+                'ﾗ': 'ラ', 'ﾘ': 'リ', 'ﾙ': 'ル', 'ﾚ': 'レ', 'ﾛ': 'ロ',
+                'ﾜ': 'ワ', 'ｦ': 'ヲ', 'ﾝ': 'ン',
+                'ｧ': 'ァ', 'ｨ': 'ィ', 'ｩ': 'ゥ', 'ｪ': 'ェ', 'ｫ': 'ォ',
+                'ｯ': 'ッ', 'ｬ': 'ャ', 'ｭ': 'ュ', 'ｮ': 'ョ',
+                'ｰ': 'ー', '･': '・'
+            };
+            
+            // 濁点付きの文字（2文字）を先に変換し、その後に単体の文字（1文字）を変換する
+            const reg = new RegExp('(' + Object.keys(kanaMap).join('|') + ')', 'g');
+            str = str.replace(reg, function(match) {
+                return kanaMap[match];
+            });
+
+            return str.toLowerCase();
+        }
+
+        // サジェスト表示
+        function showSuggest(inputElem) {
+            const modeElem = document.querySelector('input[name="courseAutoConvert"]:checked');
+            if (modeElem && modeElem.value === 'none') {
+                hideSuggest(inputElem.id);
+                return;
+            }
+            const val = normalizeForCourse(inputElem.value);
+            const suggestDivId = 'suggest_' + inputElem.id;
+            const suggestDiv = document.getElementById(suggestDivId);
+            if (!suggestDiv || val.length === 0) { hideSuggest(inputElem.id); return; }
+
+            let matches = [];
+            let customKeys = Object.keys(customDictionary);
+            let existsCStartingWithVal = false;
+            let activeCustomPrefixes = [];
+
+            // 1. カスタム辞書を検索し、現在の入力状態を判定する
+            customKeys.forEach(k => {
+                if (customDictionary[k] && customDictionary[k].length > 0) {
+                    if (k.startsWith(val)) {
+                        existsCStartingWithVal = true; // 入力文字から続くカスタムキーがまだ存在する
+                        matches.push(...customDictionary[k]);
+                    }
+                    if (val.startsWith(k)) {
+                        activeCustomPrefixes.push(k); // すでに完全に打ち終わったカスタムキーが存在する（msなど）
+                    }
+                }
+            });
+
+            // 2. デフォルト辞書を検索し、賢く表示/非表示を切り替える
+            Object.keys(defaultDictionary).forEach(D => {
+                if (D.startsWith(val) && defaultDictionary[D].length > 0) {
+                    // ★ 条件A：ユーザーがデフォルトキー(ms)を最後まで打ち切ったが、カスタムキー(mst)の可能性がまだ残っている場合
+                    let condA = customDictionary[D] && customDictionary[D].length > 0;
+                    
+                    // ★ 条件B：ユーザーがカスタムキー(ms)を完全に打ち終わっているため、そこから派生するデフォルトキー(msb)を無効化する場合
+                    let condB = activeCustomPrefixes.some(c => D.startsWith(c));
+
+                    // どちらかの条件に当てはまる場合、このデフォルトキーは空気を読んで隠れる
+                    if (condA || condB) return;
+
+                    matches.push(...defaultDictionary[D]);
+                }
+            });
+
+            if (matches.length > 0) {
+                const uniqueResults = [...new Set(matches.map(m => m.full))];
+                
+                let exactMatches = null;
+                if (customDictionary[val] && customDictionary[val].length > 0) {
+                    exactMatches = customDictionary[val];
+                } else if (defaultDictionary[val] && defaultDictionary[val].length > 0) {
+                    // カスタムキーの気配がない場合のみデフォルトの完全一致を認める
+                    let condA = existsCStartingWithVal;
+                    let condB = activeCustomPrefixes.length > 0;
+                    if (!condA && !condB) {
+                        exactMatches = defaultDictionary[val];
+                    }
+                }
+                
+                // 1つに絞られたら自動確定へ任せるため隠す
+                if (exactMatches && uniqueResults.length === 1) {
+                    hideSuggest(inputElem.id); return;
+                }
+
+                if (uniqueResults.length > 5) {
+                    suggestDiv.style.display = 'none';
+                    return;
+                }
+                
+                suggestDiv.innerHTML = uniqueResults.map(r => `<div class="suggest-item" onclick="selectSuggest('${r}', '${inputElem.id}')">${r}</div>`).join('');
+                suggestDiv.style.display = 'block';
+            } else {
+                suggestDiv.style.display = 'none';
+            }
+        }
+
+
+        // 自動変換ロジック
         function applyCourseConversion(inputElem) {
-            const mode = document.querySelector('input[name="courseAutoConvert"]:checked').value;
+            const modeElem = document.querySelector('input[name="courseAutoConvert"]:checked');
+            if (!modeElem) return false;
+            const mode = modeElem.value;
             if (mode === 'none') return false;
             
-            const val = inputElem.value.toLowerCase();
+            const val = normalizeForCourse(inputElem.value);
             if (val.length === 0) return false;
 
-            const matches = Object.keys(courseDictionary).filter(k => k.startsWith(val));
-            const uniqueResults = [...new Set(matches.map(m => courseDictionary[m].full))];
+            let prefixMatches = [];
+            let customKeys = Object.keys(customDictionary);
+            let existsCStartingWithVal = false;
+            let activeCustomPrefixes = [];
+
+            // 1. カスタム辞書の検索
+            customKeys.forEach(k => {
+                if (customDictionary[k] && customDictionary[k].length > 0) {
+                    if (k.startsWith(val)) {
+                        existsCStartingWithVal = true;
+                        prefixMatches.push(...customDictionary[k]);
+                    }
+                    if (val.startsWith(k)) {
+                        activeCustomPrefixes.push(k);
+                    }
+                }
+            });
+
+            // 2. デフォルト辞書の検索（サジェストと同じ賢いロジック）
+            Object.keys(defaultDictionary).forEach(D => {
+                if (D.startsWith(val) && defaultDictionary[D].length > 0) {
+                    let condA = customDictionary[D] && customDictionary[D].length > 0;
+                    let condB = activeCustomPrefixes.some(c => D.startsWith(c));
+                    if (condA || condB) return;
+                    prefixMatches.push(...defaultDictionary[D]);
+                }
+            });
+
+            const uniquePrefixResults = [...new Set(prefixMatches.map(m => m.full))];
+
+            // 完全一致するキーを探す
+            let exactMatches = null;
+            if (customDictionary[val] && customDictionary[val].length > 0) {
+                exactMatches = customDictionary[val];
+            } else if (defaultDictionary[val] && defaultDictionary[val].length > 0) {
+                let condA = existsCStartingWithVal;
+                let condB = activeCustomPrefixes.length > 0;
+                if (!condA && !condB) {
+                    exactMatches = defaultDictionary[val];
+                }
+            }
+
+            if (!exactMatches) return false; // 打ち途中なので保留
+
+            const uniqueExactResults = [...new Set(exactMatches.map(m => m.full))];
             
-            if (uniqueResults.length === 1) {
-                const fullText = uniqueResults[0];
-                const courseObj = courseBaseData.find(c => c.full === fullText);
+            // 完全に1つに絞られ、後ろに続く候補もない場合のみ自動変換
+            if (uniqueExactResults.length === 1 && uniquePrefixResults.length === 1) {
+                const fullText = uniqueExactResults[0];
+                const courseObj = exactMatches.find(c => c.full === fullText);
+                
                 let converted = fullText;
-                if (mode === 'abbr') converted = userCustomAbbr[courseObj.id] || courseObj.abbr;
+                if (mode === 'abbr') converted = courseObj.abbr;
                 else if (mode === 'enAbbr') converted = courseObj.enAbbr;
                 
                 inputElem.value = converted;
                 hideSuggest(inputElem.id);
                 afterConversion(inputElem);
-                return true;
+                saveData();
+                return true; 
             }
+            
             return false;
         }
 
+        // 変換後のカーソル移動・フォーカス外し
         function afterConversion(inputElem) {
+            // いったんフォーカスを外し、余計な文字の入力を防ぐ
             inputElem.blur();
 
             let isSection = false;
@@ -535,6 +1599,7 @@
             const autoMoveEl = document.getElementById('optAutoMoveToNext');
             const autoMove = autoMoveEl ? autoMoveEl.checked : true;
 
+            // 道中かつ自動移動がONの場合で、始点入力枠のときだけ終点へ移動
             if (isSection && autoMove) {
                 let nextId = null;
                 if (inputElem.id === 'courseName1') nextId = 'courseName2';
@@ -553,37 +1618,106 @@
             }
         }
 
+        // 入力された文字のチェック
         function getTeamByAbbr(val) {
             if (!val) return null;
             const rows = document.querySelectorAll('.team-input-row');
+
+            // まず「入力文字（abbr）」で一致するチームを探す
             for (let i = 0; i < rows.length; i++) {
                 const abbr = rows[i].querySelector('.abbr').value;
                 if (abbr && abbr === val) {
-                    return { name: rows[i].querySelector('.name').value, bg: teamColors[i % teamColors.length].bg, fg: teamColors[i % teamColors.length].fg };
+                    return { 
+                        abbr: abbr, 
+                        name: rows[i].querySelector('.name').value, 
+                        bg: teamColors[i % teamColors.length].bg, 
+                        fg: teamColors[i % teamColors.length].fg 
+                    };
                 }
             }
+
+            // 入力文字で見つからなかった場合のみ、「チーム名（name）」で一致するチームを探す
+            for (let i = 0; i < rows.length; i++) {
+                const teamName = rows[i].querySelector('.name').value;
+                const abbr = rows[i].querySelector('.abbr').value; // ★ ここでも略称を取得
+                if (teamName && teamName === val) {
+                    return { 
+                        abbr: abbr, 
+                        name: teamName, 
+                        bg: teamColors[i % teamColors.length].bg, 
+                        fg: teamColors[i % teamColors.length].fg 
+                    };
+                }
+            }
+
+            // どちらでも見つからなければ null を返す
             return null;
         }
 
+        // 枠にフォーカスした時（クリックや移動で入った時）
         function handleInputFocus(e) {
-            const overlay = e.target.nextElementSibling;
-            if (overlay && overlay.classList.contains('team-overlay')) overlay.style.opacity = '0';
+            const el = e.target;
+            const overlay = el.nextElementSibling;
+            // 一旦オーバーレイを透明にして、入力文字を見えるようにする
+            if (overlay && overlay.classList.contains('team-overlay')) {
+                overlay.style.opacity = '0';
+                overlay.style.zIndex = ''; // 重なり順をリセット
+            }
+            // 文字色や重なりを完全にリセット
+            el.style.color = ''; 
+            el.style.backgroundColor = '';
+            el.style.position = '';
+            el.style.zIndex = '';
+            el.style.caretColor = '';
         }
 
+        // 枠から外れた時（エンターなどで確定した時）
         function handleInputBlur(e) {
-            const val = e.target.value.trim();
+            const el = e.target;
+            const val = el.value.trim();
             const matched = getTeamByAbbr(val);
-            const overlay = e.target.nextElementSibling;
+            const overlay = el.nextElementSibling;
+            
             if (overlay && overlay.classList.contains('team-overlay')) {
                 if (matched) {
-                    overlay.innerText = matched.name; overlay.style.backgroundColor = matched.bg;
-                    overlay.style.color = matched.fg; overlay.style.opacity = '1';
-                } else overlay.style.opacity = '0';
+                    overlay.innerText = matched.name; 
+                    overlay.style.backgroundColor = matched.bg;
+                    overlay.style.color = matched.fg; 
+                    overlay.style.opacity = '1';
+                    
+                    // 移動後は「入力枠を上にする設定」を解除し、オーバーレイで薄い枠を綺麗に隠す
+                    el.style.position = '';
+                    el.style.zIndex = ''; 
+                    overlay.style.zIndex = ''; 
+                    el.style.backgroundColor = ''; 
+                    el.style.color = ''; 
+                    el.style.caretColor = '';
+                } else {
+                    overlay.style.opacity = '0';
+                    el.style.color = '';
+                    el.style.backgroundColor = '';
+                    el.style.position = '';
+                    el.style.zIndex = '';
+                    el.style.caretColor = '';
+                }
             }
         }
 
+        // 入力枠を生成
         function renderRaceInputGrid() {
             const container = document.getElementById('newRaceInputGrid');
+            if (!container) return;
+
+            // ★ 修正ポイント1：現在の入力値を「順位（rank）」に紐づけて一時保存する
+            let tempValues = {};
+            for (let i = 0; i < 24; i++) {
+                const input = document.getElementById(`newRaceInput_${i}`);
+                if (input) {
+                    const rank = input.getAttribute('data-rank'); // 今の枠が何位かを取得
+                    tempValues[rank] = input.value; // 順位をキーにして文字を保存
+                }
+            }
+
             const order = document.querySelector('input[name="inputOrder"]:checked').value;
             let gridHTML = '';
             for (let i = 0; i < 24; i++) {
@@ -597,27 +1731,232 @@
                 </div></div>`;
             }
             container.innerHTML = gridHTML;
-        }
 
-        function handleNewRaceInput(e, idx) {
-            const val = e.target.value.trim();
-            const matched = getTeamByAbbr(val);
-            if (matched) {
-                const nextInput = document.getElementById(`newRaceInput_${idx + 1}`);
-                if (nextInput) nextInput.focus();
-                else document.querySelector('.btn-calc').focus();
+            // ★ 修正ポイント2：保存しておいた入力値を、同じ「順位（rank）」の枠に正しく入れ直す
+            for (let i = 0; i < 24; i++) {
+                const input = document.getElementById(`newRaceInput_${i}`);
+                if (input) {
+                    const rank = input.getAttribute('data-rank');
+                    if (tempValues[rank]) {
+                        input.value = tempValues[rank];
+                        
+                        // 文字を入れ直した直後に、色やチーム名を反映させるために「入力された」とシステムに認識させる
+                        input.dispatchEvent(new Event('input'));
+                    }
+                }
             }
         }
 
+        let hasAttemptedAutoAdd = false;
+        let isErrorMode = false;
+
+        // 新規レース枠で文字を打った時
+        function handleNewRaceInput(e, idx) {
+            const el = e.target;
+            const val = el.value.trim();
+            const matched = getTeamByAbbr(val);
+
+            if (matched && val === matched.name && val !== matched.abbr) {
+                el.value = matched.abbr;
+            }
+
+            const overlay = el.nextElementSibling;
+            if (overlay && overlay.classList.contains('team-overlay')) {
+                if (matched) {
+                    overlay.innerText = matched.name;
+                    overlay.style.backgroundColor = matched.bg;
+                    overlay.style.color = matched.fg;
+                    overlay.style.opacity = '1';
+                    
+                    // ▼ 打った瞬間に黒枠を上にする
+                    el.style.position = 'relative';
+                    el.style.zIndex = '2';
+                    overlay.style.zIndex = '1';
+                    el.style.backgroundColor = 'transparent';
+                    el.style.color = 'transparent'; // 入力文字を隠す
+                    el.style.caretColor = '#000';   // ただしカーソルだけは黒で見せる
+                } else {
+                    overlay.style.opacity = '0';
+                    el.style.color = '';
+                    el.style.caretColor = '';
+                    el.style.backgroundColor = '';
+                }
+            }
+
+            if (matched && typeof isErrorMode !== 'undefined' && !isErrorMode) {
+                const nextInput = document.getElementById(`newRaceInput_${idx + 1}`);
+                if (nextInput) nextInput.focus();
+            }
+
+            if (typeof checkAutoAdd === 'function') checkAutoAdd();
+            if (typeof validateNewRaceAbbrs === 'function') validateNewRaceAbbrs();
+            if (typeof saveData === 'function') saveData();
+        }
+
+        // 24枠目自動補完
+        function checkAutoAdd() {
+            let filledCount = 0;
+            let emptyIdx = -1;
+            let currentInputs = [];
+
+            for (let i = 0; i < 24; i++) {
+                const input = document.getElementById(`newRaceInput_${i}`);
+                if (input && input.value.trim() !== '') {
+                    filledCount++;
+                    currentInputs.push(input.value.trim());
+                } else {
+                    emptyIdx = i;
+                }
+            }
+
+            // 万が一、手動で全ての文字を消した場合はエラーモードも完全リセット
+            if (filledCount === 0) {
+                isErrorMode = false;
+                hasAttemptedAutoAdd = false;
+            }
+
+            const teamCount = parseInt(document.getElementById('teamCountSelect').value);
+            const expectedPerTeam = 24 / teamCount;
+            const teamMap = {};
+            document.querySelectorAll('.team-input-row').forEach(row => {
+                const a = row.querySelector('.abbr').value; 
+                if(a) teamMap[a] = 0;
+            });
+
+            // チェックボックスの状態を取得
+            const autoFillCheckbox = document.getElementById('optAutoFill23');
+            const isAutoFillEnabled = autoFillCheckbox ? autoFillCheckbox.checked : true;
+
+            // 23枠目自動補完
+            if (filledCount === 23 && emptyIdx !== -1 && !isErrorMode && isAutoFillEnabled) {
+                let hasError = false;
+                currentInputs.forEach(val => {
+                    if (teamMap[val] !== undefined) {
+                        teamMap[val]++;
+                    } else {
+                        hasError = true;
+                    }
+                });
+
+                if (!hasError) {
+                    let missingTeam = null;
+                    let canAutoFill = true;
+
+                    for (const [abbr, count] of Object.entries(teamMap)) {
+                        if (count > expectedPerTeam) {
+                            canAutoFill = false;
+                            break;
+                        } else if (count === expectedPerTeam - 1) {
+                            missingTeam = abbr;
+                        }
+                    }
+
+                    if (canAutoFill && missingTeam) {
+                        const input = document.getElementById(`newRaceInput_${emptyIdx}`);
+                        input.value = missingTeam;
+                        handleInputBlur({ target: input });
+                        filledCount++;
+                        currentInputs.push(missingTeam);
+                    }
+                }
+            }
+
+            const btn = document.getElementById('btnAddRace');
+
+            // 24個埋まったときの処理
+            if (filledCount === 24) {
+                let hasError = false;
+                let finalCounts = {};
+                for (let a in teamMap) finalCounts[a] = 0;
+
+                for (let i = 0; i < 24; i++) {
+                    const val = document.getElementById(`newRaceInput_${i}`).value.trim();
+                    if (finalCounts[val] !== undefined) {
+                        finalCounts[val]++;
+                    } else {
+                        hasError = true;
+                    }
+                }
+                
+                if (!hasError) {
+                    for (const a in finalCounts) {
+                        if (finalCounts[a] !== expectedPerTeam) {
+                            hasError = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (isErrorMode) {
+                    // ▼ 修正中はエラーがあってもなくても絶対に自動追加しない
+                    // ボタンを表示したままにし、ユーザーの手動追加を待つ
+                    if (btn) btn.style.display = 'block';
+                } else {
+                    // ▼ 初回の入力完了時
+                    if (hasError) {
+                        // 初回でエラーがあった場合はエラーモードに突入し、一度だけダイアログを出す
+                        isErrorMode = true; 
+                        if (btn) btn.style.display = 'block';
+                        
+                        if (!hasAttemptedAutoAdd) {
+                            hasAttemptedAutoAdd = true;
+                            setTimeout(() => addRace(), 50); 
+                        }
+                    } else {
+                        // エラーなしで成功した場合は自動追加
+                        if (btn) btn.style.display = 'none';
+                        if (!hasAttemptedAutoAdd) {
+                            hasAttemptedAutoAdd = true;
+                            setTimeout(() => addRace(), 50); 
+                        }
+                    }
+                }
+            } else {
+                // 24個未満になった場合
+                if (isErrorMode) {
+                    // 修正のために文字を消して24個未満になった場合は、
+                    // フラグをリセットせずボタンも表示したままにする（自動追加を防ぐため）
+                    if (btn) btn.style.display = 'block';
+                } else {
+                    // 初回入力中でまだ24個埋まっていない場合
+                    if (btn) btn.style.display = 'none';
+                    hasAttemptedAutoAdd = false;
+                }
+            }
+        }
+
+        // 入力枠　矢印キー設定
         function handleNewRaceKeydown(e, idx) {
             if (e.key === 'Backspace' && e.target.value === '') {
                 const prevInput = document.getElementById(`newRaceInput_${idx - 1}`);
                 if (prevInput) prevInput.focus();
             } else if (e.key === 'Enter') {
                 addRace();
+            } else {
+                let next = -1;
+                if (e.key === "ArrowLeft") {
+                    if (idx > 0) next = idx - 1;
+                } else if (e.key === "ArrowRight") {
+                    if (idx < 23) next = idx + 1;
+                } else if (e.key === "ArrowUp") {
+                    if (idx >= 12) next = idx - 12;
+                } else if (e.key === "ArrowDown") {
+                    if (idx < 12) next = idx + 12;
+                }
+                
+                if (next !== -1) {
+                    e.preventDefault();
+                    const nextInput = document.getElementById(`newRaceInput_${next}`);
+                    if (nextInput) {
+                        nextInput.focus();
+                        const len = nextInput.value.length;
+                        nextInput.setSelectionRange(len, len);
+                    }
+                }
             }
         }
 
+        // 確定ボタンを押したときのポップアップ警告処理
         function addRace() {
             const totalRaces = parseInt(document.getElementById('totalRaces').value) || 12;
             if (raceHistory.length >= totalRaces) {
@@ -639,21 +1978,38 @@
             if (!hasInput) return;
             const teamCount = parseInt(document.getElementById('teamCountSelect').value);
             const expectedPerTeam = 24 / teamCount;
+            
             const teamMap = {};
+            const teamNameMap = {}; // チーム名を取得するためのマップ
             document.querySelectorAll('.team-input-row').forEach(row => {
-                const a = row.querySelector('.abbr').value; if(a) teamMap[a] = true;
+                const a = row.querySelector('.abbr').value; 
+                const n = row.querySelector('.name').value;
+                if(a) { 
+                    teamMap[a] = true; 
+                    teamNameMap[a] = n; // 入力文字とチーム名を紐づける
+                }
             });
+            
             let errorMessages = [];
             const counts = {}; const unknown = []; let missingCount = 0;
             tokens.forEach(t => {
                 if (t === '?') missingCount++;
                 else { if (!teamMap[t]) unknown.push(t); counts[t] = (counts[t] || 0) + 1; }
             });
+            
             if (missingCount > 0) errorMessages.push(`・未入力の順位が ${missingCount} 箇所あります`);
             if (unknown.length > 0) errorMessages.push(`・未登録の入力文字: ${[...new Set(unknown)].join(', ')}`);
+            
             const wrongCounts = [];
-            Object.keys(teamMap).forEach(a => { const c = counts[a] || 0; if (c !== expectedPerTeam) wrongCounts.push(`${a}(${c}個)`); });
-            if (wrongCounts.length > 0) errorMessages.push(`・各チーム ${expectedPerTeam} 個ずつの入力ではありません:\n    ${wrongCounts.join(', ')}`);
+            Object.keys(teamMap).forEach(a => { 
+                const c = counts[a] || 0; 
+                if (c !== expectedPerTeam) {
+                    // 入力文字ではなくチーム名を表示する
+                    const tName = teamNameMap[a] || a;
+                    wrongCounts.push(`${tName}(${c}人)`); 
+                } 
+            });
+            if (wrongCounts.length > 0) errorMessages.push(`・各チーム ${expectedPerTeam} 人ずつの入力ではありません:\n    ${wrongCounts.join(', ')}`);
 
             if (errorMessages.length > 0) {
                 if (!confirm("⚠️ 入力内容に以下の注意点があります：\n\n" + errorMessages.join('\n') + "\n\n続行しますか？")) return;
@@ -661,10 +2017,52 @@
             const c1 = document.getElementById('courseName1').value, c2 = document.getElementById('courseName2').value, cType = document.querySelector('input[name="courseType"]:checked').value;
             let cName = c1; if(cType==='section' && c2) cName += " → " + c2;
             raceHistory.push({ teams: tokens.join(' '), course: cName });
-            clearRaceInputs(); renderHistory(); updateAll();
+            clearRaceInputs(); renderHistory(); updateAll(event);
         }
 
+        // 入力枠クリア設定
+        function clearCurrentRaceInput() {
+            let hasInput = false;
+            
+            // 24枠のどこかに文字が入っているかチェック
+            for (let i = 0; i < 24; i++) {
+                const input = document.getElementById(`newRaceInput_${i}`);
+                if (input && input.value.trim() !== '') {
+                    hasInput = true;
+                    break;
+                }
+            }
+            
+            // コース名に文字が入っているかチェック
+            const c1 = document.getElementById('courseName1').value.trim();
+            const c2 = document.getElementById('courseName2').value.trim();
+            if ((c1 && c1.value.trim() !== '') || (c2 && c2.value.trim() !== '')) {
+                hasInput = true;
+            }
+
+            // 入力がある場合のみ警告を出す
+            if (hasInput) {
+                if (!confirm("現在入力中のレース情報を消去しますか？")) return;
+            }
+
+            // クリア処理の実行
+            if (typeof clearRaceInputs === 'function') clearRaceInputs();
+            if (c1) c1.value = '';
+            if (c2) c2.value = '';
+            
+            isErrorMode = false;
+            hasAttemptedAutoAdd = false;
+            const btn = document.getElementById('btnAddRace');
+            if (btn) btn.style.display = 'none';
+        }
+
+        //入力クリア実行
         function clearRaceInputs() {
+            hasAttemptedAutoAdd = false;
+            isErrorMode = false;
+            const btn = document.getElementById('btnAddRace');
+            if (btn) btn.style.display = 'none';
+
             for (let i = 0; i < 24; i++) {
                 const input = document.getElementById(`newRaceInput_${i}`);
                 if (input) { input.value = ''; const overlay = input.nextElementSibling; if(overlay) overlay.style.opacity = '0'; }
@@ -672,8 +2070,9 @@
             document.getElementById('courseName1').value = ''; document.getElementById('courseName2').value = '';
             if (document.getElementById('newRaceInput_0')) document.getElementById('newRaceInput_0').focus();
         }
-
-        function updateAll() {
+        
+        // 表示設定
+        function updateAll(e) {
             const totalRacesElem = document.getElementById('totalRaces');
             if (parseInt(totalRacesElem.value) < 1 || isNaN(parseInt(totalRacesElem.value))) totalRacesElem.value = 1;
             const teamCount = parseInt(document.getElementById('teamCountSelect').value);
@@ -681,40 +2080,51 @@
             
             let trVal = parseInt(targetRankElem.value);
             const maxTargetRank = Math.max(1, teamCount - 1);
+            document.getElementById('targetRank').max = maxTargetRank;
             if (isNaN(trVal) || trVal < 1) targetRankElem.value = 1;
             else if (trVal > maxTargetRank) targetRankElem.value = maxTargetRank;
-
+        
             const mode = document.querySelector('input[name="displayMode"]:checked').value;
             const optShowRankText = document.getElementById('optShowRankText').checked;
             const optShowMyRankPrefix = document.getElementById('optShowMyRankPrefix').checked;
             const optShowBorderDiffSuffix = document.getElementById('optShowBorderDiffSuffix').checked;
-            document.getElementById('targetMainArea').style.display = (mode === 'target' || optShowBorderDiffSuffix) ? 'block' : 'none';
+            const optHighlightBorder = document.getElementById('optHighlightBorder').checked;
+            const showGuaranteeText = document.getElementById('showGuaranteeText').checked;
+            const showDefeatText = document.getElementById('showDefeatText').checked;
+            document.getElementById('targetMainArea').style.display = (mode === 'target' || optShowBorderDiffSuffix || optHighlightBorder ||showGuaranteeText|| showDefeatText) ? 'block' : 'none';
             document.getElementById('borderAdvancedConfigs').style.display = (mode === 'target') ? 'block' : 'none';
-
+        
             const teamMap = {};
             document.querySelectorAll('.team-input-row').forEach(row => {
                 const a = row.querySelector('.abbr').value, n = row.querySelector('.name').value, c = parseInt(row.querySelector('.correction').value) || 0;
                 if(a) teamMap[a] = { name: n, correction: c };
             });
-
+        
             const myTeam = document.getElementById('myTeamSelect').value;
-            const targetRank = parseInt(document.getElementById('targetRank').value) || 6;
+            const targetRank = parseInt(document.getElementById('targetRank').value) || 1;
             const threshold = parseInt(document.getElementById('threshold').value) || 0;
-
+        
             let scores = {}; Object.values(teamMap).forEach(t => scores[t.name] = t.correction);
             raceHistory.forEach(r => { r.teams.split(/\s+/).forEach((a, i) => { if(teamMap[a]) scores[teamMap[a].name] += pointsTable[i]; }); });
             let sorted = Object.keys(scores).map(n => ({ name: n, score: scores[n] })).sort((a,b) => b.score - a.score);
             let myIdx = sorted.findIndex(t => t.name === myTeam), myScore = myIdx !== -1 ? sorted[myIdx].score : null;
-            let borderIdx = (myIdx < targetRank) ? targetRank : targetRank - 1;
-            let borderTeam = sorted[borderIdx] || sorted[sorted.length-1], borderScore = borderTeam ? borderTeam.score : 0;
-
+            
+            let myActualRank = 1;
+            if (myScore !== null) {
+                myActualRank = sorted.filter(t => t.score > myScore).length + 1;
+            }
+            const isTie = myScore !== null && sorted.filter(t => t.score === myScore).length > 1;
+        
+            const isInside = myActualRank <= targetRank;
+            const compPos = isInside ? targetRank : targetRank - 1;
+            const compTeam = sorted[compPos] || sorted[sorted.length - 1];
+            const borderScore = compTeam ? compTeam.score : 0;
+            const compRankDisp = isInside ? targetRank + 1 : targetRank;
+        
             let output = []; let currentRank = 1; let uniqueScores = [...new Set(sorted.map(t => t.score))];
-            let myActualRank = 1; let borderActualRank = 1;
-
+        
             uniqueScores.forEach(s => {
                 let teamsInRank = sorted.filter(t => t.score === s);
-                if (myScore !== null && s > myScore) myActualRank += teamsInRank.length;
-                if (s > borderScore) borderActualRank += teamsInRank.length;
                 let displayNames = []; let hasMyTeam = false;
                 teamsInRank.forEach(t => {
                     let keep = (mode !== 'target');
@@ -722,107 +2132,252 @@
                         const isMe = t.name === myTeam, isTargetTeam = t.score === borderScore;
                         if(isMe || isTargetTeam) keep = true;
                         else {
-                            const activeMode = (myIdx < targetRank) ? document.querySelector('input[name="aboveMode"]:checked').value : document.querySelector('input[name="belowMode"]:checked').value;
-                            let inBetween = (myIdx < targetRank) ? (t.score <= myScore && t.score >= borderScore) : (t.score >= myScore && t.score <= borderScore);
-                            let inThreshold = (myIdx < targetRank) ? (t.score <= myScore && (myScore - t.score) <= threshold) : (t.score >= myScore && (t.score - myScore) <= threshold);
+                            const activeMode = isInside ? document.querySelector('input[name="aboveMode"]:checked').value : document.querySelector('input[name="belowMode"]:checked').value;
+                            let inBetween = isInside ? (t.score <= myScore && t.score >= borderScore) : (t.score >= myScore && t.score <= borderScore);
+                            let inThreshold = isInside ? (t.score <= myScore && (myScore - t.score) <= threshold) : (t.score >= myScore && (t.score - myScore) <= threshold);
                             if (activeMode === 'between') keep = inBetween; else if (activeMode === 'both') keep = (inBetween || inThreshold);
                         }
                     }
-                    if(keep) { if (t.name === myTeam) { displayNames.push(`【${t.name}】`); hasMyTeam = true; } else displayNames.push(t.name); }
+                    if(keep) { 
+                        if (t.name === myTeam) { 
+                            const doHighlight = document.getElementById('optHighlightMyTeam') ? document.getElementById('optHighlightMyTeam').checked : true;
+                            displayNames.push(doHighlight ? `【${t.name}】` : t.name); 
+                            hasMyTeam = true; 
+                        } else {
+                            displayNames.push(t.name);
+                        }
+                    }
                 });
                 if(displayNames.length > 0) {
                     let valStr = (mode !== 'normal' && myScore !== null && !hasMyTeam) ? (myScore - s > 0 ? `+${myScore - s}` : `${myScore - s}`) : s;
-                    output.push(optShowRankText ? `${teamsInRank.length>1?'同率':''}${currentRank}位 ${displayNames.join('・')} ${valStr}` : `${displayNames.join('・')} ${valStr}`);
+                    let baseText = optShowRankText ? `${teamsInRank.length>1?'同率':''}${currentRank}位 ${displayNames.join('・')} ${valStr}` : `${displayNames.join('・')} ${valStr}`;
+        
+                    // ボーダー強調の判定を追加
+                    const dohighlightBorder = document.getElementById('optHighlightBorder') ? document.getElementById('optHighlightBorder').checked : false;
+                    if (dohighlightBorder && s === borderScore) {
+                        baseText = `**${baseText}**`;
+                    }
+                    output.push(baseText);
                 }
                 currentRank += teamsInRank.length;
             });
-
-            let finalOutputStr = (optShowMyRankPrefix && myScore !== null ? `現在${myActualRank}位／` : "") + (output.join('／') || "自チームを登録してください");
-            if (optShowBorderDiffSuffix && myScore !== null) finalOutputStr += `／${borderActualRank}位との点差 ${myScore - borderScore > 0 ? `+${myScore - borderScore}` : myScore - borderScore}`;
-            const rem = Math.max(0, parseInt(document.getElementById('totalRaces').value) - raceHistory.length);
-            finalOutputStr += (raceHistory.length > 0 ? `／${raceHistory[raceHistory.length-1].course} ` : "／ ") + `@${rem}`;
-            if(document.getElementById('showCorrectionText').checked && Object.values(teamMap).some(t=>t.correction!==0)) finalOutputStr += " (補正込み)";
-
-            if (myScore !== null && (mode === 'target' || optShowBorderDiffSuffix)) {
-                let posAbove = 0, strAbove = 0;
-                const memCount = 24 / teamCount, sortedPts = [...pointsTable].sort((a,b) => b-a);
-                let maxP=0, minP=0; 
-                for(let i=0; i<memCount; i++){ maxP+=sortedPts[i]; minP+=sortedPts[sortedPts.length-1-i]; }
+        
+            let finalOutputStr = (optShowMyRankPrefix && myScore !== null ? `現在${isTie ? '同率' : ''}${myActualRank}位／` : "") + (output.join('／') );
+        
+            // 点差・目標順位モードで自チーム「なし」の場合のメッセージ上書き
+            if ((mode === 'diff' || mode === 'target') && myTeam === '') {
+                finalOutputStr = "自チームを選択してください";
+            }
+            
+            if (optShowBorderDiffSuffix && myScore !== null) {
+                const diff = myScore - borderScore;
+                const diffStr = diff === 0 ? "±0" : (diff > 0 ? `+${diff}` : diff);
+                finalOutputStr += `／${compRankDisp}位との点差 ${diffStr}`;
+            }
+        
+                const rem = Math.max(0, parseInt(document.getElementById('totalRaces').value) - raceHistory.length);
                 
-                let myMinFinal = myScore + rem * minP;
-                let myMaxFinal = myScore + rem * maxP;
+                if (finalOutputStr === "自チームを選択してください") {
+                    finalOutputStr += `／@${rem}`;
+                } else {
+                    finalOutputStr += (raceHistory.length > 0 ? `／${raceHistory[raceHistory.length-1].course} ` : "／ ") + `@${rem}`;
+                }
+        
+                if(document.getElementById('showCorrectionText').checked && Object.values(teamMap).some(t=>t.correction!==0)) finalOutputStr += " (補正込み)";
+        
+                if (myScore !== null && (mode === 'target' || optShowBorderDiffSuffix)) {
+                    let posAbove = 0, strAbove = 0;
+                    const memCount = 24 / teamCount, sortedPts = [...pointsTable].sort((a,b) => b-a);
+                    let maxP=0, minP=0; 
+                    for(let i=0; i<memCount; i++){ maxP+=sortedPts[i]; minP+=sortedPts[sortedPts.length-1-i]; }
+                    
+                    let myMinFinal = myScore + rem * minP;
+                    let myMaxFinal = myScore + rem * maxP;
+        
+                    sorted.forEach(t => { 
+                        if(t.name === myTeam) return; 
+                        if (rem > 0) {
+                            if(t.score + rem * maxP >= myMinFinal) posAbove++; 
+                            if(t.score + rem * minP > myMaxFinal) strAbove++; 
+                        } else {
+                            if(t.score >= myScore) posAbove++;
+                            if(t.score > myScore) strAbove++;
+                        }
+                    });
+        
+                    if (document.getElementById('showGuaranteeText').checked && posAbove < targetRank) {
+                        finalOutputStr += (targetRank===1 ? " ［勝利確定］ " : " ［通過確定］");
+                    } else if (document.getElementById('showDefeatText').checked && strAbove >= targetRank) {
+                        finalOutputStr += " ［敗北確定］";
+                    }
+                }
+        
+                const previousOutputStr = document.getElementById('resultOutput').innerText;
+        
+                let hasEmptyTeamName = false;
+                let myTeamAbbrEmpty = false; // 自チームの入力文字が空欄かどうかのフラグ
+                const currentMyTeam = document.getElementById('myTeamSelect') ? document.getElementById('myTeamSelect').value : '';
+                const currentMode = document.querySelector('input[name="displayMode"]:checked') ? document.querySelector('input[name="displayMode"]:checked').value : 'normal';
 
-                sorted.forEach(t => { 
-                    if(t.name === myTeam) return; 
-                    if (rem > 0) {
-                        if(t.score + rem * maxP >= myMinFinal) posAbove++; 
-                        if(t.score + rem * minP > myMaxFinal) strAbove++; 
-                    } else {
-                        if(t.score >= myScore) posAbove++;
-                        if(t.score > myScore) strAbove++;
+                document.querySelectorAll('.team-input-row').forEach(row => {
+                    const nameVal = row.querySelector('.name').value.trim();
+                    const abbrVal = row.querySelector('.abbr').value.trim();
+                    
+                    if (nameVal === '') hasEmptyTeamName = true;
+                    
+                    // ▼ 追加：現在選択されている自チームの「入力文字」が空欄かチェックする
+                    if (nameVal !== '' && nameVal === currentMyTeam && abbrVal === '') {
+                        myTeamAbbrEmpty = true;
                     }
                 });
 
-                if (document.getElementById('showGuaranteeText').checked && posAbove < targetRank) {
-                    finalOutputStr += (targetRank===1 ? " ［勝利確定］ " : " ［通過確定］");
-                } else if (document.getElementById('showDefeatText').checked && strAbove >= targetRank) {
-                    finalOutputStr += " ［敗北確定］";
+                let displayStr = finalOutputStr;
+
+                if (hasEmptyTeamName) {
+                    displayStr = "チーム名を登録してください";
+                } else if (raceHistory.length === 0) {
+                                    displayStr = "ここに結果を表示します";
+                // 「自チームを選択〜」の文字列が含まれていたら、@(残りレース)を消して完全上書きする
+                } else if (displayStr.includes("自チームを選択してください") || ((currentMode === 'diff' || currentMode === 'target') && (!currentMyTeam || currentMyTeam === ''))) {
+                    displayStr = "自チームを選択してください";
+                } else if ((currentMode === 'diff' || currentMode === 'target') && myTeamAbbrEmpty) {
+                    displayStr = "自チームの入力文字を設定してください";
+                
                 }
+
+                if (typeof validateAbbrs === 'function') validateAbbrs();
+                
+                const outputEl = document.getElementById('resultOutput');
+                // 中央揃えの対象メッセージに「自チームの入力文字を設定してください」を追加
+                const centerMessages = ["チーム名を登録してください", "ここに結果を表示します", "自チームを選択してください", "自チームの入力文字を設定してください"];
+                
+                // 文字列のどこかに上記のキーワードが含まれていれば中央揃え
+                const isCenter = centerMessages.some(msg => displayStr.includes(msg));
+                
+                if (isCenter) {
+                    outputEl.style.textAlign = 'center';
+                } else {
+                    outputEl.style.textAlign = 'left';
+                }
+                outputEl.innerText = displayStr;
+
+                // 何らかのエラー
+                let hasAnyError = false;
+                
+                // チーム設定（入力文字・チーム名）のエラーをチェック
+                const abbrErrorDiv = document.getElementById('abbrErrorMessage');
+                if (abbrErrorDiv && abbrErrorDiv.style.display === 'block') {
+                    hasAnyError = true;
+                }
+                // 新規入力枠のエラーをチェック
+                const newRaceWarning = document.getElementById('newRaceWarning');
+                if (newRaceWarning && newRaceWarning.innerText.trim() !== '') {
+                    hasAnyError = true;
+                }
+                // レース履歴のエラーをチェック
+                for (let i = 0; i < raceHistory.length; i++) {
+                    const historyWarning = document.getElementById(`historyWarning_${i}`);
+                    if (historyWarning && historyWarning.innerText.trim() !== '') {
+                        hasAnyError = true;
+                    }
+                }
+
+                // エラーの有無で背景色を切り替え
+                if (hasAnyError) {
+                    outputEl.style.backgroundColor = '#ffb3b3'; // 薄い赤
+                } else {
+                    outputEl.style.backgroundColor = '#f8f9fa';   // 通常は白
+                }
+        
+                saveData();
+            
+            // 自動コピー（表示されている文字列 displayStr をコピーする）
+            let shouldCopy = true;
+            if (raceHistory.length === 0 || hasEmptyTeamName || displayStr.includes("自チームを選択してください") || displayStr.includes("自チームの入力文字を設定してください") || displayStr === previousOutputStr) {
+                shouldCopy = false;
             }
-
-            document.getElementById('resultOutput').innerText = finalOutputStr;
-            saveData();
-            if (!skipAutoCopy) autoCopyResult(finalOutputStr);
+            if (!skipAutoCopy && shouldCopy) {
+                if (typeof autoCopyResult === 'function') autoCopyResult(displayStr);
+            }
         }
 
+        let toastTimeout; // 何度も呼ばれたときにタイマーをリセットするための変数
+
+        // トースト通知設定
         function showToast(msg) {
-            const toast = document.getElementById('toast'); toast.innerText = msg; toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            const bar = document.getElementById('toastProgressBar');
+
+            toastMsg.innerText = msg;
+            toast.classList.add('show');
+
+            // シークバーのアニメーション設定
+            bar.style.transition = 'none';
+            bar.style.width = '100%';
+            void bar.offsetWidth; // アニメーションをリセットするためのおまじない
+            bar.style.transition = 'width 2500ms linear';
+            bar.style.width = '0%';
+
+            // 前のタイマーをキャンセルして新しく2.5秒測り直す
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
         }
 
+        // コピー用関数
         function executeCopy(text, msg) {
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(() => fallbackCopy(text, msg));
             } else fallbackCopy(text, msg);
         }
-
         function fallbackCopy(text, msg) {
             const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
             document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showToast(msg); } catch (err) {} document.body.removeChild(ta);
         }
 
+        // 自動コピー設定
         function autoCopyResult(text) {
             if (!text || text === lastCopiedResult) return;
-            lastCopiedResult = text; executeCopy(text, '結果を自動コピーしました');
+            lastCopiedResult = text; executeCopy(text, '結果をコピーしました');
         }
 
+        // 手動コピー設定
         function manualCopy() { const t = document.getElementById('resultOutput').innerText; executeCopy(t, '結果をコピーしました'); lastCopiedResult = t; }
 
+        // 履歴コース修正設定
         function toggleHistCourse(i) {
             const isSection = document.querySelector(`input[name="hcType_${i}"]:checked`).value === 'section';
             const c1 = document.getElementById(`hc1_${i}`), c2 = document.getElementById(`hc2_${i}`), sep = document.getElementById(`hcSep_${i}`);
-            c1.placeholder = isSection ? "始点" : "コース名"; sep.style.display = isSection ? "inline" : "none";
+            c1.placeholder = isSection ? "コース名（始点）" : "コース名"; sep.style.display = isSection ? "inline" : "none";
             const c2w = document.getElementById(`hc2Wrapper_${i}`);
             if (c2w) c2w.style.display = isSection ? "flex" : "none";
             updateHistoryCourseAdvanced(i);
         }
 
+        // 履歴コース表示設定
         function updateHistoryCourseAdvanced(i) {
             const isSection = document.querySelector(`input[name="hcType_${i}"]:checked`).value === 'section';
             const c1 = document.getElementById(`hc1_${i}`).value, c2 = document.getElementById(`hc2_${i}`).value;
-            raceHistory[i].course = isSection && c2 ? c1 + " → " + c2 : c1; updateAll();
+            raceHistory[i].course = isSection && c2 ? c1 + " → " + c2 : c1; updateAll(event);
         }
 
+        // 履歴順位設定
         function updateHistoryTeamTokens(raceIdx) {
             const row = document.getElementById('historyRow_' + raceIdx);
             const inputs = row.querySelectorAll('.history-rank-grid input');
             let newTokens = new Array(24).fill('?');
             inputs.forEach(inp => { newTokens[parseInt(inp.getAttribute('data-idx'))] = inp.value.trim() || '?'; });
-            raceHistory[raceIdx].teams = newTokens.join(' '); updateAll();
+            raceHistory[raceIdx].teams = newTokens.join(' '); updateAll(event);
+            if (typeof validateHistoryAbbrs === 'function') validateHistoryAbbrs(raceIdx);
         }
 
-        function deleteRace(i) { raceHistory.splice(i, 1); renderHistory(); updateAll(); }
+        // 削除ボタン設定
+        function deleteRace(i) { raceHistory.splice(i, 1); renderHistory(); updateAll(event); }
 
+
+        // 履歴設定
         function renderHistory() {
             const container = document.getElementById('historyContainer');
             const isDesc = (document.querySelector('input[name="inputOrder"]:checked')?.value || 'desc') === 'desc';
@@ -832,80 +2387,402 @@
                     let rank = isDesc ? 24 - j : j + 1, tokenIdx = 24 - rank, val = (tokens[tokenIdx] === '?') ? '' : (tokens[tokenIdx] || '');
                     let matched = getTeamByAbbr(val);
                     gridHTML += `<div class="history-rank-item"><span>${rank}位</span><div style="position:relative; width:100%; height:22px;">
-                        <input type="text" data-idx="${tokenIdx}" value="${val.replace(/"/g, '&quot;')}" onchange="updateHistoryTeamTokens(${i})" onfocus="handleInputFocus(event)" onblur="handleInputBlur(event)">
+                        <input type="text" id="histInput_${i}_${j}" data-idx="${tokenIdx}" value="${val.replace(/"/g, '&quot;')}" oninput="handleHistoryInput(event, ${i})" onchange="updateHistoryTeamTokens(${i})" onkeydown="handleHistoryKeydown(event, ${i}, ${j})" onfocus="handleInputFocus(event)" onblur="handleInputBlur(event)">
                         <div class="team-overlay" style="opacity:${matched?'1':'0'}; background-color:${matched?matched.bg:'transparent'}; color:${matched?matched.fg:'#000'};">${matched?matched.name:''}</div>
                     </div></div>`;
                 }
+                gridHTML += '</div>';
+                
+                // 順位枠のすぐ下に警告用の要素を追加
+                gridHTML += `<div id="historyWarning_${i}" style="color: #dc3545; font-size: 11px; font-weight: bold; margin-top: 2px; margin-bottom: 5px; min-height: 1.2em;"></div>`;
+
                 let cName = r.course || "", isSection = cName.includes(" → "), parts = cName.split(" → "), c1 = parts[0], c2 = parts[1] || "";
                 return `<div class="history-row" id="historyRow_${i}">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><strong>第 ${i+1}レース</strong><button class="btn-delete" onclick="deleteRace(${i})">削除</button></div>
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:5px; font-size:13px; background:#f8f9fa; padding:5px; border-radius:4px; border:1px solid #ddd;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><strong>第 ${i+1}レース</strong>
+                        <div style="display: flex; gap: 5px;">
+                        <button class="btn-clear" style="padding: 2px 8px; font-size: 11px;" onclick="clearSpecificRace(${i})">クリア</button>
+                        <button class="btn-delete" onclick="deleteRace(${i})">削除</button></div>
+                    </div>    
+                    ${gridHTML}<div style="display:flex; gap:8px; align-items:center; margin-bottom:5px; font-size:13px; background:#f8f9fa; padding:5px; border-radius:4px; border:1px solid #ddd;">
                         <label style="margin:0; font-weight:normal; cursor:pointer;"><input type="radio" name="hcType_${i}" value="lap" ${!isSection?'checked':''} onchange="toggleHistCourse(${i})"> 周回</label>
                         <label style="margin:0; font-weight:normal; cursor:pointer;"><input type="radio" name="hcType_${i}" value="section" ${isSection?'checked':''} onchange="toggleHistCourse(${i})"> 道中</label>
                         <div style="position:relative; flex:1; display: flex; align-items: center; gap: 5px;">
-                            <input type="text" id="hc1_${i}" class="edit-input" style="margin:0; flex:1;" value="${c1.replace(/"/g, '&quot;')}" autocomplete="off" oninput="handleCourseInput(event, ${i})" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event, ${i})" onkeydown="handleSuggestKeydown(event)">
+                            <input type="text" id="hc1_${i}" class="edit-input" style="margin:0; flex:1;" placeholder="${isSection ? 'コース名（始点）' : 'コース名'}" value="${c1.replace(/"/g, '&quot;').trim()}" autocomplete="off" oninput="handleCourseInput(event, ${i})" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event, ${i})" onkeydown="handleSuggestKeydown(event)">
                             <div id="suggest_hc1_${i}" class="suggest-list"></div>
                         </div>
                         <span id="hcSep_${i}" style="display:${isSection?'inline':'none'};">→</span>
                         <div style="position:relative; flex:1; display:${isSection?'flex':'none'}; align-items: center; gap: 5px;" id="hc2Wrapper_${i}">
-                            <input type="text" id="hc2_${i}" class="edit-input" style="margin:0; flex:1;" placeholder="終点" value="${c2.replace(/"/g, '&quot;')}" autocomplete="off" oninput="handleCourseInput(event, ${i})" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event, ${i})" onkeydown="handleSuggestKeydown(event)">
+                            <input type="text" id="hc2_${i}" class="edit-input" style="margin:0; flex:1;" placeholder="コース名（終点）" value="${c2.replace(/"/g, '&quot;').trim()}" autocomplete="off" oninput="handleCourseInput(event, ${i})" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event, ${i})" onkeydown="handleSuggestKeydown(event)">
                             <div id="suggest_hc2_${i}" class="suggest-list"></div>
                         </div>
-                    </div>${gridHTML}</div>`;
+                    </div></div>`;
+                    
             }).join('');
+
+            // 履歴を描画し終わった直後に、各行の警告チェック関数を走らせる
+            for (let i = 0; i < raceHistory.length; i++) {
+                if (typeof validateHistoryAbbrs === 'function') {
+                    validateHistoryAbbrs(i);
+                }
+            }
         }
-        
-        function saveData() {
-            const d = {
-                tr: document.getElementById('totalRaces').value, tc: document.getElementById('teamCountSelect').value,
-                my: document.getElementById('myTeamSelect').value, m: document.querySelector('input[name="displayMode"]:checked').value,
-                rank: document.getElementById('targetRank').value, th: document.getElementById('threshold').value,
-                aboveMode: document.querySelector('input[name="aboveMode"]:checked').value,
-                belowMode: document.querySelector('input[name="belowMode"]:checked').value,
-                optRnk: document.getElementById('optShowRankText').checked, optPrf: document.getElementById('optShowMyRankPrefix').checked,
-                optSuf: document.getElementById('optShowBorderDiffSuffix').checked, optGrt: document.getElementById('showGuaranteeText').checked,
-                optDef: document.getElementById('showDefeatText').checked, optOrder: document.querySelector('input[name="inputOrder"]:checked').value,
-                autoConv: document.querySelector('input[name="courseAutoConvert"]:checked').value,
-                optAutoMove: document.getElementById('optAutoMoveToNext') ? document.getElementById('optAutoMoveToNext').checked : true,
-                hist: raceHistory, 
-                teams: Array.from(document.querySelectorAll('.team-input-row')).map(row => ({ a: row.querySelector('.abbr').value, n: row.querySelector('.name').value, c: row.querySelector('.correction').value })),
-                userAbbr: userCustomAbbr
+
+        // 履歴矢印キー設定
+        function handleHistoryKeydown(e, rIdx, j) {
+            let next = -1;
+            if (e.key === "ArrowLeft") {
+                if (j > 0) next = j - 1;
+            } else if (e.key === "ArrowRight") {
+                if (j < 23) next = j + 1;
+            } else if (e.key === "ArrowUp") {
+                if (j >= 12) next = j - 12;
+            } else if (e.key === "ArrowDown") {
+                if (j < 12) next = j + 12;
+            }
+            
+            if (next !== -1) {
+                e.preventDefault();
+                const nextInput = document.getElementById(`histInput_${rIdx}_${next}`);
+                if (nextInput) {
+                    nextInput.focus();
+                    const len = nextInput.value.length;
+                    nextInput.setSelectionRange(len, len);
+                }
+            }
+        }
+
+        // 履歴の入力枠でチーム名が打たれた時に略称に自動変換する関数        
+        // 履歴枠で文字を打った時
+        function handleHistoryInput(e, rIdx) {
+            const el = e.target;
+            const val = el.value.trim();
+            const matched = getTeamByAbbr(val);
+
+            if (matched && val === matched.name && val !== matched.abbr) {
+                el.value = matched.abbr;
+            }   
+
+            const overlay = el.nextElementSibling;
+            if (overlay && overlay.classList.contains('team-overlay')) {
+                if (matched) {
+                    overlay.innerText = matched.name;
+                    overlay.style.backgroundColor = matched.bg;
+                    overlay.style.color = matched.fg;
+                    overlay.style.opacity = '1';
+                    
+                    // ▼ 履歴枠も同様に黒枠を上にする
+                    el.style.position = 'relative';
+                    el.style.zIndex = '2';
+                    overlay.style.zIndex = '1';
+                    el.style.backgroundColor = 'transparent';
+                    el.style.color = 'transparent';
+                    el.style.caretColor = '#000';
+                } else {
+                    overlay.style.opacity = '0';
+                    el.style.color = '';
+                    el.style.caretColor = '';
+                    el.style.backgroundColor = '';
+                }
+            }
+
+            if (typeof updateHistoryTeamTokens === 'function') {
+                updateHistoryTeamTokens(rIdx);
+            }
+            if (typeof validateHistoryAbbrs === 'function') {
+                validateHistoryAbbrs(rIdx);
+            }
+        }
+
+        // クリア実行設定
+        function clearSpecificRace(index) {
+            const race = raceHistory[index];
+            const emptyTeams = Array(24).fill(" ").join(" "); // 完全に空欄の状態
+            let hasInput = false;
+
+            // 順位やコースに何かデータが残っているかチェック
+            if (race.teams !== emptyTeams) hasInput = true;
+            if (race.course && race.course.trim() !== "") hasInput = true;
+
+            // 入力がある場合のみ警告を出す
+            if (hasInput) {
+                if (!confirm("このレースの順位とコースを空欄にしますか？")) return;
+            }
+
+            // 24人分を半角スペース（未入力状態）で埋める
+            raceHistory[index].teams = emptyTeams;
+            raceHistory[index].course = "";
+            renderHistory();
+            updateAll();
+        }
+
+        // 削除実行設定
+        function deleteRace(index) {
+            if (!confirm("このレース履歴を削除してもよろしいですか？")) return;
+            raceHistory.splice(index, 1);
+            renderHistory();
+            updateAll();
+        }
+
+       // 履歴の下に出る赤文字の警告を判定する関数
+        function validateHistoryAbbrs(idx) {
+            const warningEl = document.getElementById(`historyWarning_${idx}`);
+            if (!warningEl) return;
+
+            const race = raceHistory[idx];
+            const teams = race.teams.split(/\s+/);
+            
+            let validAbbrs = [];
+            document.querySelectorAll('.team-input-row .abbr').forEach(input => {
+                if (input.value.trim() !== "") validAbbrs.push(input.value.trim());
+            });
+            const validAbbrsSet = new Set(validAbbrs);
+
+            const teamCountSelect = document.getElementById('teamCountSelect');
+            const teamCount = teamCountSelect ? parseInt(teamCountSelect.value) : 2;
+            const maxPerTeam = 24 / teamCount; // 例: 4チームなら 24/4 = 6人
+
+            let enteredCounts = {};
+            let emptyCount = 0;
+            let filledCount = 0;
+            let unregistered = new Set();
+            let overLimitTeams = new Set();
+            let underLimitTeams = new Set(); // ★追加：人数不足リスト
+
+            // ▼入力文字から「チーム名」を取得するヘルパー関数
+            const getTeamName = (abbr) => {
+                if (typeof getTeamByAbbr === 'function') {
+                    const matched = getTeamByAbbr(abbr);
+                    if (matched && matched.name) return matched.name;
+                }
+                return abbr; 
             };
+
+            teams.forEach(t => {
+                const val = t.trim();
+                if (val === "" || val === "?") {
+                    emptyCount++;
+                } else {
+                    filledCount++;
+                    if (!enteredCounts[val]) enteredCounts[val] = 0;
+                    enteredCounts[val]++;
+                    if (!validAbbrsSet.has(val)) unregistered.add(val);
+                }
+            });
+
+            // 人数超過と人数不足をそれぞれ「チーム名」で判定
+            validAbbrs.forEach(abbr => {
+                const count = enteredCounts[abbr] || 0;
+                if (count > maxPerTeam) {
+                    overLimitTeams.add(getTeamName(abbr));
+                } else if (count < maxPerTeam) {
+                    underLimitTeams.add(getTeamName(abbr));
+                }
+            });
+
+            if (filledCount === 0) { warningEl.innerText = ""; return; }
+
+            let msg = [];
+            if (overLimitTeams.size > 0) msg.push(`⚠️人数超過: ${Array.from(overLimitTeams).join(", ")}`);
+            if (underLimitTeams.size > 0) msg.push(`⚠️人数不足: ${Array.from(underLimitTeams).join(", ")}`);
+            if (unregistered.size > 0) msg.push(`⚠️未登録: ${Array.from(unregistered).join(", ")}`);
+            if (emptyCount > 0) msg.push("⚠️空欄あり");
+
+            warningEl.innerText = msg.join(" / ");
+        }
+
+        // セーブ設定
+        function saveData() {
+            // 安全に値を取得するヘルパー関数
+            const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+            const getChecked = (id) => { const el = document.getElementById(id); return el ? el.checked : false; };
+            const getRadio = (name) => { 
+                const el = document.querySelector(`input[name="${name}"]:checked`); 
+                return el ? el.value : ""; 
+            };
+
+            // 順位入力（24枠）の取得
+            const currentInput = [];
+            for (let i = 0; i < 24; i++) {
+                const el = document.getElementById(`newRaceInput_${i}`);
+                currentInput.push(el ? el.value : "");
+            }
+
+            // チーム情報の取得
+            const currentTeams = Array.from(document.querySelectorAll('.team-input-row')).map(row => ({
+                a: row.querySelector('.abbr') ? row.querySelector('.abbr').value : "",
+                n: row.querySelector('.name') ? row.querySelector('.name').value : "",
+                c: row.querySelector('.correction') ? row.querySelector('.correction').value : "0"
+            }));
+
+            const d = {
+                // 基本設定
+                tr: getVal('totalRaces'),
+                tc: getVal('teamCountSelect'),
+                my: getVal('myTeamSelect'),
+                m: getRadio('displayMode') || 'diff',
+                rank: getVal('targetRank'),
+                th: getVal('threshold'),
+
+                // 表示・動作オプション
+                optRnk: getChecked('optShowRankText'),
+                optPrf: getChecked('optShowMyRankPrefix'),
+                optHighlightMy: getChecked('optHighlightMyTeam'),
+                optHighlightBor: getChecked('optHighlightBorder'),
+                optSuf: getChecked('optShowBorderDiffSuffix'),
+                optCorr: getChecked('showCorrectionText'), 
+                optGrt: getChecked('showGuaranteeText'),
+                optDef: getChecked('showDefeatText'),
+                optAutoMove: getChecked('optAutoMoveToNext'),
+                optAutoFill: getChecked('optAutoFill23'),
+                
+                // モード選択（ラジオボタン）
+                aboveMode: getRadio('aboveMode'),
+                belowMode: getRadio('belowMode'),
+                optOrder: getRadio('inputOrder'),
+                autoConv: getRadio('courseAutoConvert'),
+
+                // コース・入力データ
+                curInp: currentInput,
+                curCourseType: getRadio("courseType") || "lap",
+                curCourse1: getVal("courseName1"),
+                curCourse2: getVal("courseName2"),
+
+                // 履歴とチーム設定
+                hist: typeof raceHistory !== 'undefined' ? raceHistory : [],
+                teams: currentTeams,
+                userAbbr: typeof userCustomAbbr !== 'undefined' ? userCustomAbbr : {},
+                userCustomTrigger: typeof userCustomTrigger !== 'undefined' ? userCustomTrigger : {}
+            };
+
             localStorage.setItem('mkCalcDataDetailed_v4', JSON.stringify(d));
         }
 
+        // ロード設定
         function loadData() {
-            const s = localStorage.getItem('mkCalcDataDetailed_v4'); if(!s) { renderRaceInputGrid(); return; }
+            const s = localStorage.getItem('mkCalcDataDetailed_v4'); 
+            if(!s) { 
+                if (typeof renderRaceInputGrid === 'function') renderRaceInputGrid();
+                return; 
+            }
             const d = JSON.parse(s);
-            document.getElementById('totalRaces').value = d.tr; document.getElementById('teamCountSelect').value = d.tc;
-            document.getElementById('targetRank').value = d.rank; document.getElementById('threshold').value = d.th || 10;
-            if(d.optRnk !== undefined) document.getElementById('optShowRankText').checked = d.optRnk;
-            if(d.optPrf !== undefined) document.getElementById('optShowMyRankPrefix').checked = d.optPrf;
-            if(d.optSuf !== undefined) document.getElementById('optShowBorderDiffSuffix').checked = d.optSuf;
-            if(d.optGrt !== undefined) document.getElementById('showGuaranteeText').checked = d.optGrt;
-            if(d.optDef !== undefined) document.getElementById('showDefeatText').checked = d.optDef;
-            if (d.optOrder) { const r = document.querySelector(`input[name=\"inputOrder\"][value=\"${d.optOrder}\"]`); if(r) r.checked = true; }
-            if (d.aboveMode) { const am = document.querySelector(`input[name=\"aboveMode\"][value=\"${d.aboveMode}\"]`); if(am) am.checked = true; }
-            if (d.belowMode) { const bm = document.querySelector(`input[name=\"belowMode\"][value=\"${d.belowMode}\"]`); if(bm) bm.checked = true; }
-            if (d.autoConv) { const ac = document.querySelector(`input[name=\"courseAutoConvert\"][value=\"${d.autoConv}\"]`); if(ac) ac.checked = true; }
-            if (d.optAutoMove !== undefined) { const amEl = document.getElementById('optAutoMoveToNext'); if(amEl) amEl.checked = d.optAutoMove; }
-            raceHistory = d.hist || [];
-            userCustomAbbr = d.userAbbr || {};
-            renderRaceInputGrid(); renderHistory(); window.savedTeams = d.teams;
-            const modeRad = document.querySelector(`input[name=\"displayMode\"][value=\"${d.m}\"]`); if(modeRad) modeRad.checked = true;
-            setTimeout(() => { if(d.my) document.getElementById('myTeamSelect').value = d.my; updateAll(); }, 100);
+
+            // ヘルパー関数：要素が存在する場合のみ値をセット
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined) el.value = val; };
+            const setChecked = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined) el.checked = val; };
+            const setRadio = (name, val) => { 
+                if(!val) return;
+                const el = document.querySelector(`input[name="${name}"][value="${val}"]`); 
+                if(el) el.checked = true; 
+            };
+
+            // 基本設定の復元
+            setVal('totalRaces', d.tr);
+            setVal('teamCountSelect', d.tc);
+            setVal('targetRank', d.rank);
+            setVal('threshold', d.th || 10);
+
+            // チェックボックスの復元
+            setChecked('optShowRankText', d.optRnk);
+            setChecked('optShowMyRankPrefix', d.optPrf);
+            setChecked('optHighlightMyTeam', d.optHighlightMy);
+            setChecked('optHighlightBorder', d.optHighlightBor);
+            setChecked('optShowBorderDiffSuffix', d.optSuf);
+            setChecked('showCorrectionText', d.optCorr);
+            setChecked('showGuaranteeText', d.optGrt);
+            setChecked('showDefeatText', d.optDef);
+            setChecked('optAutoMoveToNext', d.optAutoMove);
+            setChecked('optAutoFill23', d.optAutoFill);
+
+            // ラジオボタンの復元
+            setRadio('inputOrder', d.optOrder);
+            setRadio('aboveMode', d.aboveMode);
+            setRadio('belowMode', d.belowMode);
+            setRadio('courseAutoConvert', d.autoConv);
+            setRadio('displayMode', d.m);
+            setRadio('courseType', d.curCourseType);
+
+            // データの復元とチーム枠の構築
+            if (d.hist) raceHistory = d.hist;
+            if (d.userAbbr) userCustomAbbr = d.userAbbr;
+            if (d.userCustomTrigger) userCustomTrigger = d.userCustomTrigger;
+            if (d.teams) {window.savedTeams = d.teams; // buildTeamInputs内で参照される変数 
+            }
+            
+            if (typeof buildTeamInputs === 'function') buildTeamInputs();
+
+            // チーム入力欄の詳細（名前・補正）を復元
+            if (d.teams && d.teams.length > 0) {
+                document.querySelectorAll('.team-input-row').forEach((row, i) => {
+                    if (d.teams[i]) {
+                        const abbrEl = row.querySelector('.abbr');
+                        if (abbrEl) abbrEl.value = d.teams[i].a || "";
+                        const nameEl = row.querySelector('.name');
+                        if (nameEl) nameEl.value = d.teams[i].n || "";
+                        const corrEl = row.querySelector('.correction');
+                        if (corrEl) corrEl.value = d.teams[i].c || "0";
+                    }
+                });
+            }
+
+            if (typeof renderRaceInputGrid === 'function') renderRaceInputGrid();
+            
+            // 順位入力（24枠）と背景色の復元
+            if (d.curInp && Array.isArray(d.curInp)) {
+                d.curInp.forEach((val, i) => {
+                    const inputEl = document.getElementById(`newRaceInput_${i}`);
+                    if (inputEl) {
+                        inputEl.value = val;
+                        // 背景色（オーバーレイ）の更新
+                        if (typeof getTeamByAbbr === 'function') {
+                            const matched = getTeamByAbbr(val);
+                            const overlay = inputEl.nextElementSibling;
+                            if (overlay && overlay.classList.contains('team-overlay')) {
+                                overlay.style.opacity = matched ? '1' : '0';
+                                overlay.style.backgroundColor = matched ? matched.bg : 'transparent';
+                                overlay.style.color = matched ? matched.fg : '#000';
+                                overlay.innerText = matched ? matched.name : '';
+                            }
+                        }
+                    }
+                });
+            }
+
+            // UIの最終更新
+            setVal("courseName1", d.curCourse1);
+            setVal("courseName2", d.curCourse2);
+
+            if (typeof toggleCourseInput === 'function') toggleCourseInput();
+            if (typeof updateCourseDictionary === 'function') updateCourseDictionary();
+            if (typeof buildCustomAbbrInputs === 'function') buildCustomAbbrInputs();
+            if (typeof renderHistory === 'function') renderHistory();
+
+            // 自チーム選択の即時反映（setTimeoutを使わない）
+            if (typeof updateAll === 'function') {
+                updateAll(); // まずセレクトボックスの中身を作成
+                const mySelect = document.getElementById('myTeamSelect');
+                if (d.my && mySelect) {
+                    mySelect.value = d.my; // 保存された値をセット
+                }
+                updateAll(); // 選択された状態でもう一度全体を更新
+            }
         }
 
         function resetRaces() { 
             if(confirm("レース結果と点数補正をすべてリセットしますか？")) { 
                 raceHistory = []; document.querySelectorAll('.team-input-row .correction').forEach(i => i.value = 0);
-                clearRaceInputs(); renderHistory(); updateAll();
+                clearRaceInputs(); renderHistory(); updateAll(event);
             } 
         }
 
         function resetAll() { 
             if(confirm("設定、チーム情報、履歴をすべて初期化しますか？")) { 
-                skipAutoCopy = true; localStorage.clear(); location.reload(); 
+                skipAutoCopy = true; 
+                localStorage.clear(); 
+                
+                // location.reload(); を消して、以下の行に変更します。
+                // ブラウザの「おせっかいな復元」を完全に断ち切って、真っ新な状態でページを開き直します。
+                window.location.href = window.location.pathname;
+                location.reload();
             } 
         }
 
@@ -913,6 +2790,94 @@
         document.addEventListener('click', e => { 
             if(!e.target.closest('.course-input-area') && !e.target.closest('.history-row')) {
                 hideSuggest(); 
+            }
+        });
+        // ▼ 新機能：コースの「始点 ⇔ 終点」をShift＋左右で移動する
+        document.addEventListener('keydown', e => { 
+            // Shiftと左右キーが押された時、かつ今いる場所が入力枠(<input>)であるか
+            if (e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && e.target.tagName === 'INPUT') {
+                const currentId = e.target.id;
+                let targetId = null;
+
+                // Shift ＋ 右 を押したら「終点（2）」へ
+                if (e.key === "ArrowRight") {
+                    if (currentId === "courseName1") targetId = "courseName2"; // 新規レース枠
+                    else if (currentId && currentId.startsWith("hc1_")) targetId = currentId.replace("hc1_", "hc2_"); // 履歴枠
+                } 
+                // Shift ＋ 左 を押したら「始点（1）」へ
+                else if (e.key === "ArrowLeft") {
+                    if (currentId === "courseName2") targetId = "courseName1"; // 新規レース枠
+                    else if (currentId && currentId.startsWith("hc2_")) targetId = currentId.replace("hc2_", "hc1_"); // 履歴枠
+                }
+
+                // 移動先が見つかった場合
+                if (targetId) {
+                    const targetInput = document.getElementById(targetId);
+                    // ターゲットが存在し、かつ「道中モード」で画面に表示されている（幅が0より大きい）場合のみ移動
+                    if (targetInput && targetInput.offsetWidth > 0) {
+                        e.preventDefault(); // デフォルトの動作を止める
+                        targetInput.focus(); // カーソルを移動
+                        // カーソルを文字の末尾へ
+                        const len = targetInput.value.length;
+                        targetInput.setSelectionRange(len, len);
+                    }
+                }
+            }
+        
+        });
+
+        // ▼ 新規レースおよび履歴枠での「Enterキーで終点へ移動」機能
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                const currentId = e.target.id;
+                // 始点（courseName1）または履歴の始点（hc1_〇〇）にいる場合
+                if (currentId === 'courseName1' || (currentId && currentId.startsWith('hc1_'))) {
+                    
+                    const autoConvertElem = document.querySelector('input[name="courseAutoConvert"]:checked');
+                    const isConvOff = autoConvertElem && autoConvertElem.value === 'none';
+                    const moveNextElem = document.getElementById('optAutoMoveToNext');
+                    const isMoveOn = moveNextElem && moveNextElem.checked;
+                    
+                    if (isConvOff && isMoveOn) {
+                        e.preventDefault(); // デフォルトのEnter動作を阻止
+                        
+                        // 新規枠ならcourseName2へ、履歴枠ならhc2_〇〇へ移動
+                        const targetId = currentId === 'courseName1' ? 'courseName2' : currentId.replace('hc1_', 'hc2_');
+                        const targetInput = document.getElementById(targetId);
+                        
+                        // 移動先が存在し、画面に表示されている場合のみフォーカス
+                        if (targetInput && targetInput.offsetWidth > 0) {
+                            targetInput.focus();
+                        }
+                    }
+                }
+            }
+        });
+
+        // ラジオボタンの矢印キーによるループ（端から逆の端への移動）を無効化し、端で止める処理
+        document.addEventListener('keydown', function(e) {
+            // ラジオボタン上で矢印キーが押された場合のみ処理
+            if (e.target.type === 'radio' && ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                e.preventDefault(); // デフォルトのループ移動をブロック
+
+                const groupName = e.target.name;
+                const radios = Array.from(document.querySelectorAll(`input[type="radio"][name="${groupName}"]`));
+                const currentIndex = radios.indexOf(e.target);
+                let nextIndex = currentIndex;
+
+                // 押されたキーに応じて移動先を計算
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    nextIndex++;
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    nextIndex--;
+                }
+
+                // 計算した移動先が「0〜ラジオボタンの最大数」の範囲内（端を越えていない）場合のみ移動
+                if (nextIndex >= 0 && nextIndex < radios.length) {
+                    radios[nextIndex].focus();
+                    radios[nextIndex].checked = true;
+                    radios[nextIndex].dispatchEvent(new Event('change')); // 選択が変わったことをシステムに通知
+                }
             }
         });
     </script>
