@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>24人レース 集計ツール</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 1100px; margin: 0 auto; line-height: 1.6; background-color: #f4f7f9; }
+        .grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        textarea, .edit-input { width: 100%; font-size: 14px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; padding: 8px; }
+        textarea { font-family: monospace; resize: vertical; }
+        .edit-input { background-color: #fffde7; margin-bottom: 5px; }
+        select, input[type="number"], input[type="text"] { font-size: 14px; padding: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        select.full-width, input[type="number"].full-width { width: 100%; }
+        
+        button { padding: 8px 12px; font-size: 14px; cursor: pointer; border: none; border-radius: 4px; transition: 0.2s; }
+        .btn-calc { background-color: #0056b3; color: white; width: 100%; font-size: 15px; margin-top: 10px; font-weight: bold; }
+        .btn-reset { background-color: #dc3545; color: white; flex: 1; }
+        .btn-reset-races { background-color: #f0ad4e; color: white; flex: 1; }
+        .btn-copy { background-color: #28a745; color: white; width: 100%; margin-bottom: 15px; font-weight: bold; }
+        .btn-delete { background-color: #666; color: white; padding: 3px 8px; font-size: 12px; }
+        
+        .output-box { margin: 0 0 10px 0; padding: 15px; background-color: #333; color: #fff; border-radius: 4px; font-weight: bold; font-size: 1.1em; word-break: break-all; min-height: 1.5em; line-height: 1.8; }
+        
+        .history-container { max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; }
+        .history-row { display: flex; flex-direction: column; padding: 10px; border-bottom: 2px solid #eee; background: #fff; flex-shrink: 0; }
+        
+        .history-rank-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin-top: 5px; }
+        .history-rank-item { display: flex; flex-direction: column; align-items: center; background: #e9ecef; padding: 2px; border-radius: 3px; font-size: 10px; color: #444; position: relative; }
+        .history-rank-item input { width: 100%; box-sizing: border-box; padding: 3px 1px; font-size: 11px; text-align: center; border: 1px solid #ccc; font-family: monospace; height: 22px; margin: 0; }
+        
+        .team-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: bold; border-radius: 2px;
+            pointer-events: none; opacity: 0; transition: opacity 0.1s;
+            overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+            box-sizing: border-box; border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #333; font-size: 14px; }
+        .settings-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .settings-row > div { flex: 1; }
+        
+        details.team-settings { margin-top: 15px; padding: 10px; border: 1px solid #ddd; background: #fafafa; border-radius: 4px; }
+        details summary { font-weight: bold; cursor: pointer; color: #333; font-size: 14px; outline: none; }
+        .team-inputs-wrapper { margin-top: 10px; }
+        .team-input-row, .custom-input-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .team-input-row input, .custom-input-row input { padding: 4px; font-size: 13px; font-weight: bold; }
+        .team-input-row input.abbr { width: 25%; font-family: monospace; font-weight: normal; }
+        .team-input-row input.name { width: 50%; }
+        .team-input-row input.correction { width: 25%; font-weight: normal; }
+        .custom-input-row span { width: 55%; font-size: 12px; }
+        .custom-input-row input { width: 45%; font-weight: normal; }
+
+        .col-header { display: flex; gap: 5px; font-size: 12px; color: #666; margin-bottom: 4px; }
+        .col-header span.abbr { width: 25%; }
+        .col-header span.name { width: 50%; }
+        .col-header span.correction { width: 25%; }
+
+        .mode-selector { background: #e9ecef; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+        .mode-selector label { display: inline-block; margin-right: 15px; font-weight: normal; cursor: pointer; }
+        
+        .target-main-setting { background: #fff; padding: 10px; border: 1px solid #0056b3; border-radius: 4px; margin-bottom: 10px; }
+        details.output-options, details.input-options { margin-top: 10px; padding: 10px; border: 1px dashed #ccc; background: #fafafa; font-size: 13.5px; border-radius: 4px; }
+        details.output-options summary, details.input-options summary { font-weight: bold; cursor: pointer; color: #555; }
+        details.output-options summary { margin-bottom: 10px; }
+        
+        .config-group { background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+        .config-group strong { display: block; margin-bottom: 8px; color: #0056b3; border-bottom: 1px solid #eee; }
+        .config-group label.inline-label { font-weight: normal; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        
+        .radio-group { display: flex; flex-direction: column; gap: 6px; margin-top: 5px; }
+        .radio-group label { display: inline-flex; align-items: center; gap: 5px; font-weight: normal; cursor: pointer; margin: 0; }
+
+        .course-input-area { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px; margin-bottom: 10px; position: relative; }
+        .course-radio-group { font-size: 13px; display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+        .course-radio-group label { display: inline-block; font-weight: normal; margin: 0; cursor: pointer; }
+        
+        .button-group { display: flex; gap: 10px; }
+        .input-order-row { display: flex; align-items: center; gap: 15px; font-size: 13px; background: #fff; padding: 5px 10px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 8px; }
+        .input-order-row strong { color: #333; }
+        .input-order-row label { display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer; font-weight: normal; }
+
+        .toast {
+            position: fixed; bottom: 30px; left: 30px; background: rgba(0,0,0,0.8); color: white;
+            padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 10000;
+        }
+        .toast.show { opacity: 1; }
+
+        .suggest-list {
+            position: absolute; top: 100%; left: 0; right: 0; background: white;
+            border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px;
+            z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 200px; overflow-y: auto;
+        }
+        .suggest-item { padding: 5px 10px; cursor: pointer; font-size: 13px; }
+        .suggest-item:hover, .suggest-item.active { background-color: #e9ecef; }
+    </style>
+</head>
+<body>
+
+    <h2>🏁 マリオカートワールド　24人レース　即時集計</h2>
+
+    <div class="grid">
+        <div class="sidebar">
+            <div class="card">
+                <div class="settings-row">
+                    <div>
+                        <label>⚙️ 総レース数</label>
+                        <input type="number" class="full-width" id="totalRaces" value="12" min="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll()">
+                    </div>
+                    <div>
+                        <label>👥 チーム数</label>
+                        <select class="full-width" id="teamCountSelect" onchange="buildTeamInputs()">
+                            <option value="12" selected>2人×12チーム</option>
+                            <option value="8">3人×8チーム</option>
+                            <option value="6">4人×6チーム</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label>🌟 自チーム</label>
+                    <select class="full-width" id="myTeamSelect" onchange="updateAll()"></select>
+                </div>
+                <details class="team-settings">
+                    <summary>👥 入力文字・チーム名・点数補正設定</summary>
+                    <div class="team-inputs-wrapper">
+                        <div class="col-header"><span class="abbr">入力文字</span><span class="name">チーム名</span><span class="correction">点数補正</span></div>
+                        <div id="teamInputsContainer"></div>
+                    </div>
+                </details>
+            </div>
+            <div class="button-group">
+                <button class="btn-reset-races" onclick="resetRaces()">レースと点数補正を<br>リセット</button>
+                <button class="btn-reset" onclick="resetAll()">全てリセット</button>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="card">
+                <label>📝 レース情報</label>
+                <div id="newRaceInputGrid" class="history-rank-grid" style="margin-bottom: 15px;"></div>
+
+                <div class="course-input-area">
+                    <div class="course-radio-group">
+                        <label><input type="radio" name="courseType" value="lap" checked onchange="toggleCourseInput()"> 周回</label>
+                        <label><input type="radio" name="courseType" value="section" onchange="toggleCourseInput()"> 道中</label>
+                    </div>   
+                    <div style="position:relative; flex:1; display: flex; align-items: center; gap: 5px;">
+                        <input type="text" id="courseName1" placeholder="コース名" style="flex:1;" autocomplete="off"
+                            oninput="handleCourseInput(event)" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event)" onkeydown="handleSuggestKeydown(event)">
+                        <div id="suggest_courseName1" class="suggest-list"></div>
+                    </div>
+                    <span id="courseSeparator" style="display:none;">→</span>
+                    <div style="position:relative; flex:1; display:none; align-items: center; gap: 5px;" id="courseName2Wrapper">
+                        <input type="text" id="courseName2" placeholder="終点" style="flex:1;" autocomplete="off"
+                            oninput="handleCourseInput(event)" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event)" onkeydown="handleSuggestKeydown(event)">
+                        <div id="suggest_courseName2" class="suggest-list"></div>
+                    </div>
+                </div>
+
+                <button class="btn-calc" onclick="addRace()">追加 (Enter)</button>
+
+                <details class="input-options">
+                    <summary>⚙️ 入力オプション</summary>
+                    <div class="input-order-row" style="margin-top: 10px;">
+                        <strong>順位入力順:</strong>
+                        <label><input type="radio" name="inputOrder" value="desc" checked onchange="renderRaceInputGrid(); renderHistory(); saveData();"> 24位→1位</label>
+                        <label><input type="radio" name="inputOrder" value="asc" onchange="renderRaceInputGrid(); renderHistory(); saveData();"> 1位→24位</label>
+                    </div>
+                    <div class="input-order-row">
+                        <strong>コース名自動変換表示:</strong>
+                        <label><input type="radio" name="courseAutoConvert" value="none" checked onchange="saveData()"> オフ</label>
+                        <label><input type="radio" name="courseAutoConvert" value="abbr" onchange="saveData()"> 日本語略称表示</label>
+                        <label><input type="radio" name="courseAutoConvert" value="full" onchange="saveData()"> フルネーム表示</label>
+                        <label><input type="radio" name="courseAutoConvert" value="enAbbr" onchange="saveData()"> 英語略称表示</label>
+                    </div>
+                    <div style="font-size: 11px; color: #666; padding: 0 10px; margin-top: -5px;">
+                        ※登録した文字を入力した瞬間に自動で変換されます
+                    </div>
+                    <div class="input-order-row">
+                        <strong>自動カーソル移動:</strong>
+                        <label><input type="checkbox" id="optAutoMoveToNext" onchange="saveData()"> 道中コースで始点変換後、終点へ自動でカーソルを移動する</label>
+                    </div>
+                    
+
+                    <details style="margin-top: 15px; border: 1px solid #ddd; padding: 10px; background: #fff; border-radius: 4px;">
+                        <summary style="font-weight: bold; cursor: pointer; color: #333; font-size: 13.5px; outline: none;">📝 日本語略称変更設定</summary>
+                        <div id="customAbbrContainer" class="team-inputs-wrapper" style="max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
+                    </details>
+                </details>
+            </div>
+
+            <div class="card">
+                <label>📊 現在の順位</label>
+                <div id="resultOutput" class="output-box"></div>
+                <button class="btn-copy" onclick="manualCopy()">結果をコピー</button>
+                
+                <div class="mode-selector">
+                    <strong>表示モード:</strong><br>
+                    <label><input type="radio" name="displayMode" value="normal" checked onchange="updateAll()"> 通常表示</label>
+                    <label><input type="radio" name="displayMode" value="diff" onchange="updateAll()"> 点差表示</label>
+                    <label><input type="radio" name="displayMode" value="target" onchange="updateAll()"> 目標順位特化表示</label>
+
+                    <details class="output-options">
+                        <summary>⚙️ 表示オプション</summary>
+                        <div class="config-group">
+                            <strong>📝 テキスト表示形式</strong>
+                            <label class="inline-label"><input type="checkbox" id="optShowRankText" onchange="updateAll()"> 順位を表示する</label>
+                            <label class="inline-label"><input type="checkbox" id="optShowMyRankPrefix" checked onchange="updateAll()"> 現在順位を表示する</label>
+                            <label class="inline-label"><input type="checkbox" id="optShowBorderDiffSuffix" onchange="updateAll()"> ボーダーとの点差を表示する</label>
+                            <label class="inline-label"><input type="checkbox" id="showCorrectionText" checked onchange="updateAll()"> 点数補正時に「補正込み」を表示</label>
+                            <label class="inline-label"><input type="checkbox" id="showGuaranteeText" checked onchange="updateAll()"> 「通過/勝利確定」を表示</label>
+                            <label class="inline-label"><input type="checkbox" id="showDefeatText" onchange="updateAll()"> 敗北確定を表示</label>
+                        </div>
+                        <div id="targetMainArea" class="target-main-setting" style="display:none;">
+                            <label class="inline-label" style="margin-top:5px;">
+                                目標順位: <input type="number" id="targetRank" value="1" min="1" style="width: 60px;" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll()"> 位
+                            </label>
+                        </div>
+                        <div id="borderAdvancedConfigs" style="display:none;">
+                            <div class="config-group">
+                                <strong>📈 ボーダー圏内の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位の1個下と比較）</span></strong>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="aboveMode" value="none" checked onchange="updateAll()"> 自チームとボーダー点差のみ表示</label>
+                                    <label><input type="radio" name="aboveMode" value="between" onchange="updateAll()"> ボーダーまでの全チームを表示</label>
+                                    <label><input type="radio" name="aboveMode" value="both" onchange="updateAll()"> 全チームと指定点差内のチームを表示</label>
+                                </div>
+                            </div>
+                            <div class="config-group">
+                                <strong>📉 ボーダー圏外の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位と比較）</span></strong>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="belowMode" value="none" checked onchange="updateAll()"> 自チームとボーダー点差のみ表示</label>
+                                    <label><input type="radio" name="belowMode" value="between" onchange="updateAll()"> ボーダーまでの全チームを表示</label>
+                                    <label><input type="radio" name="belowMode" value="both" onchange="updateAll()"> 全チームと指定点差内のチームを表示</label>
+                                </div>
+                            </div>
+                            <div class="config-group">
+                                <strong>📏 点差指定</strong>
+                                自チームからの点差: <input type="number" id="threshold" value="10" min="0" style="width: 50px;" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll()"> 点以内を表示対象とする
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div class="card">
+                <label>📜 レース履歴修正</label>
+                <div id="historyContainer" class="history-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let raceHistory = []; 
+        const pointsTable = [1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 8, 8, 9, 9, 10, 12, 15];
+        const teamColors = [
+            { bg: '#e6194b', fg: '#ffffff' }, { bg: '#3cb44b', fg: '#ffffff' }, { bg: '#ffe119', fg: '#000000' },
+            { bg: '#4363d8', fg: '#ffffff' }, { bg: '#f58231', fg: '#000000' }, { bg: '#911eb4', fg: '#ffffff' },
+            { bg: '#46f0f0', fg: '#000000' }, { bg: '#f032e6', fg: '#ffffff' }, { bg: '#bcf60c', fg: '#000000' },
+            { bg: '#fabebe', fg: '#000000' }, { bg: '#008080', fg: '#ffffff' }, { bg: '#e6beff', fg: '#000000' }
+        ];
+        const defaultTeamData = [
+            {a: 'q', n: 'Q', c: 0}, {a: 'w', n: 'W', c: 0}, {a: 'e', n: 'E', c: 0}, {a: 'r', n: 'R', c: 0},
+            {a: 't', n: 'T', c: 0}, {a: 'y', n: 'Y', c: 0}, {a: 'a', n: 'A', c: 0}, {a: 's', n: 'S', c: 0},
+            {a: 'd', n: 'D', c: 0}, {a: 'f', n: 'F', c: 0}, {a: 'g', n: 'G', c: 0}, {a: 'h', n: 'H', c: 0}
+        ];
+
+        const courseBaseData = [
+            { id: 'mariob', full: 'マリオブラザーズサーキット', abbr: 'マリブサ', enAbbr: 'MBC', inputs: ['mariob', 'まりおｂ', 'marib', 'まりｂ','mb','MB'] },
+            { id: 'tor', full: 'トロフィーシティー', abbr: 'トロフィー', enAbbr: 'CC', inputs: ['tor', 'とｒ','cci',"CCI",'CCi'] },
+            { id: 'syu', full: 'シュポポコースター', abbr: 'シュポコ', enAbbr: 'WS', inputs: ['syu', 'しゅ', 'shu','wsu','WSU','WSu'] },
+            { id: 'dku', full: 'DKうちゅうセンター', abbr: 'DK宇宙', enAbbr: 'DKS', inputs: ['dku', 'ｄｋう', 'ｄく', 'DKu', 'DKう', 'DKU','dksp','DKSP','DKSp'] },
+            { id: 'sa', full: 'サンサンさばく', abbr: 'サンさば', enAbbr: 'rDH', inputs: ['sa', 'さ','rdh','rDH','RDH'] },
+            { id: 'he', full: 'ヘイホーカーニバル', abbr: 'ヘイカニ', enAbbr: 'rSGB', inputs: ['he', 'へ','rsg','rSG','RSG'] },
+            { id: 'wariosu', full: 'ワリオスタジアム', abbr: 'ワリスタ', enAbbr: 'rWS', inputs: ['wariosu', 'わりおす', 'warisu', 'わりす','rwst','rWST','RWST','RWSt','wst','WST','WSt'] },
+            { id: 'kir', full: 'キラーシップ', abbr: 'キラシ', enAbbr: 'rAF', inputs: ['kir', 'きｒ','ra','rA','RA','AF','af'] },
+            { id: 'dksu', full: 'DKスノーマウンテン', abbr: 'DKスノ', enAbbr: 'rDKP', inputs: ['dksu', 'DKsu', 'ｄｋす', 'DKす', 'DKSU','dkp','DKP','rdk','rDK','RDK'] },
+            { id: 'ro', full: 'ロゼッタてんもんだい', abbr: 'ロゼてん', enAbbr: 'SP', inputs: ['ro', 'ろ','sp','SP'] },
+            { id: 'ai', full: 'アイスビルディング', abbr: 'アイビル', enAbbr: 'rSHS', inputs: ['ai', 'あい','shs','SHS','rsh','rSH','RSH'] },
+            { id: 'wariosi', full: 'ワリオシップ', abbr: 'ワリシ', enAbbr: 'rWSh', inputs: ['wariosi','wariosh', 'わりおし', 'warisi', 'warish','わりし','rwsh','rWSh','RWSH','RWSh','wsh','WSH','WSh'] },
+            { id: 'no', full: 'ノコノコビーチ', abbr: 'ノコビ', enAbbr: 'rKTB', inputs: ['no', 'の','rk','rK','RK','kt','KT'] },
+            { id: 'ri', full: 'リバーサイドサファリ', abbr: 'リバサ', enAbbr: 'FO', inputs: ['ri', 'り','fo','FO'] },
+            { id: 'pi-tis', full: 'ピーチスタジアム', abbr: 'ピチスタ', enAbbr: 'PS', inputs: ['pi-tis', 'pi-chis', 'ぴーちｓ', 'pitis', 'pichis', 'ぴちｓ','ps','PS'] },
+            { id: 'pi-chib', full: 'ピーチビーチ', abbr: 'ピチビ', enAbbr: 'rPB', inputs: ['pi-chib', 'pi-tib', 'ぴーちｂ', 'pitib', 'pichib', 'ぴちｂ','pb','PB','rp','rPB','RPB'] },
+            { id: 'so', full: 'ソルティータウン', abbr: 'ソルティー', enAbbr: 'SSS', inputs: ['so', 'そ','ss','SS'] },
+            { id: 'dh', full: 'ディノディノジャングル', abbr: 'ディノディノ', enAbbr: 'rDDJ', inputs: ['de','dh', 'で', 'ｄｈ','ddj','DDJ','rdd','rDD','RDD'] },
+            { id: 'ha', full: 'ハテナしんでん', abbr: 'ハテしん', enAbbr: 'GBR', inputs: ['ha', 'は','g','G'] },
+            { id: 'pu', full: 'プクプクフォールズ', abbr: 'プクフォ', enAbbr: 'CCF', inputs: ['pu', 'ぷ','ccf','CCF',] },
+            { id: 'syo', full: 'ショーニューロード', abbr: 'ショーニュー', enAbbr: 'DD', inputs: ['syo', 'sho','dde','DDE','DDe'] },
+            { id: 'o', full: 'おばけシネマ', abbr: 'おばシネ', enAbbr: 'BCi', inputs: ['o', 'お','bci','BCi','BCI'] },
+            { id: 'ho', full: 'ホネホネツイスター', abbr: 'ホネツイ', enAbbr: 'DBB', inputs: ['ho', 'ほ','db','DB'] },
+            { id: 'mo', full: 'モーモーカントリー', abbr: 'モモカン', enAbbr: 'rMMM', inputs: ['mo', 'も', 'rm','rM','RM'] },
+            { id: 'ty', full: 'チョコマウンテン', abbr: 'チョコマ', enAbbr: 'rCM', inputs: ['ty', 'ch', 'ｔｙ', 'ｃｈ','rc','RC','rC','cm','CM'] },
+            { id: 'kin', full: 'キノピオファクトリー', abbr: 'キノファク', enAbbr: 'rTF', inputs: ['kin', 'きｎ','tf','TF','rt','rT','RT'] },
+            { id: 'ku', full: 'クッパキャッスル', abbr: 'クパキャ', enAbbr: 'BC', inputs: ['ku', 'く','bca','BCA','BCa'] },
+            { id: 'do', full: 'どんぐりツリーハウス', abbr: 'ドンつり', enAbbr: 'AH', inputs: ['do', 'ど','ah','AH'] },
+            { id: 'marios', full: 'マリオサーキット', abbr: 'マリサ', enAbbr: 'MC', inputs: ['marios', 'まりおｓ', 'maris', 'まりｓ','mc','MC'] },
+            { id: 're', full: 'レインボーロード', abbr: '虹', enAbbr: 'RR', inputs: ['re', 'れ', 'ni', 'に','rr','RR'] },
+        ];
+
+        let courseDictionary = {};
+        let userCustomAbbr = {};
+
+        let lastCopiedResult = "";
+        let skipAutoCopy = true; 
+
+        window.onload = () => { 
+            loadData(); 
+            buildTeamInputs(); 
+            buildCustomAbbrInputs();
+            updateCourseDictionary();
+            setTimeout(() => { skipAutoCopy = false; }, 500); 
+        };
+
+        function updateCourseDictionary() {
+            courseDictionary = {};
+            courseBaseData.forEach(course => {
+                const userAbbr = userCustomAbbr[course.id] || course.abbr;
+                course.inputs.forEach(input => {
+                    courseDictionary[input] = { full: course.full, abbr: userAbbr, enAbbr: course.enAbbr };
+                });
+            });
+        }
+
+        function buildCustomAbbrInputs() {
+            const container = document.getElementById('customAbbrContainer');
+            container.innerHTML = "";
+            courseBaseData.forEach(course => {
+                const val = userCustomAbbr[course.id] || course.abbr;
+                container.innerHTML += `<div class="custom-input-row">
+                    <span>${course.full}</span>
+                    <input type="text" value="${val}" oninput="userCustomAbbr['${course.id}']=this.value; updateCourseDictionary(); saveData();">
+                </div>`;
+            });
+        }
+
+        function buildTeamInputs() {
+            const count = parseInt(document.getElementById('teamCountSelect').value);
+            const container = document.getElementById('teamInputsContainer');
+            let oldData = window.savedTeams ? window.savedTeams : Array.from(container.querySelectorAll('.team-input-row')).map(row => ({
+                a: row.querySelector('.abbr').value, n: row.querySelector('.name').value, c: row.querySelector('.correction').value
+            }));
+            window.savedTeams = null;
+            container.innerHTML = "";
+            for (let i = 0; i < count; i++) {
+                const d = oldData[i] || defaultTeamData[i] || {a: '', n: '', c: 0};
+                const colorInfo = teamColors[i % teamColors.length];
+                container.innerHTML += `<div class="team-input-row">
+                    <input type="text" class="abbr" value="${d.a}" oninput="updateMyTeamList()">
+                    <input type="text" class="name" value="${d.n}" oninput="updateMyTeamList()" style="background-color: ${colorInfo.bg}; color: ${colorInfo.fg};">
+                    <input type="number" class="correction" value="${d.c}" onchange="updateAll()">
+                </div>`;
+            }
+            updateMyTeamList();
+        }
+
+        function updateMyTeamList() {
+            const select = document.getElementById('myTeamSelect');
+            const current = select.value;
+            select.innerHTML = '<option value="">(なし)</option>';
+            document.querySelectorAll('.team-input-row').forEach(row => {
+                const n = row.querySelector('.name').value;
+                if(n) select.innerHTML += `<option value="${n}" ${n===current?'selected':''}>${n}</option>`;
+            });
+            updateAll();
+        }
+
+        function toggleCourseInput() {
+            const isSection = document.querySelector('input[name="courseType"]:checked').value === 'section';
+            document.getElementById('courseName1').placeholder = isSection ? "始点" : "コース名";
+            document.getElementById('courseSeparator').style.display = isSection ? "inline" : "none";
+            document.getElementById('courseName2Wrapper').style.display = isSection ? "flex" : "none";
+        }
+
+        let isCourseIME = false;
+        let blockNextChar = false;
+
+        function handleCompositionStart() { isCourseIME = true; }
+        
+        function handleCompositionEnd(e, histIdx = null) {
+            isCourseIME = false;
+            setTimeout(() => {
+                if (applyCourseConversion(e.target)) {
+                    blockNextChar = true;
+                    setTimeout(() => blockNextChar = false, 100);
+                }
+                if (histIdx !== null) updateHistoryCourseAdvanced(histIdx);
+            }, 50);
+        }
+
+        function handleCourseInput(e, histIdx = null) {
+            if (blockNextChar) { e.target.value = e.target.value.slice(0, -1); return; }
+            if (e.inputType && e.inputType.includes('delete')) {
+                if (histIdx !== null) updateHistoryCourseAdvanced(histIdx);
+                hideSuggest(e.target.id); 
+                return;
+            }
+            if (isCourseIME) return;
+            
+            showSuggest(e.target);
+
+            setTimeout(() => {
+                if (!isCourseIME) {
+                    if (applyCourseConversion(e.target)) {
+                        blockNextChar = true;
+                        setTimeout(() => blockNextChar = false, 100);
+                    }
+                    if (histIdx !== null) updateHistoryCourseAdvanced(histIdx);
+                }
+            }, 10);
+        }
+
+        function showSuggest(inputElem) {
+            const val = inputElem.value.toLowerCase();
+            const suggestDivId = 'suggest_' + inputElem.id;
+            const suggestDiv = document.getElementById(suggestDivId);
+            if (!suggestDiv || val.length === 0) { hideSuggest(inputElem.id); return; }
+
+            const matches = Object.keys(courseDictionary).filter(k => k.startsWith(val));
+            if (matches.length > 0) {
+                const uniqueResults = [...new Set(matches.map(m => courseDictionary[m].full))];
+                
+                if (uniqueResults.length === 1) {
+                    hideSuggest(inputElem.id); return;
+                }
+                
+                suggestDiv.innerHTML = uniqueResults.map((r, i) => `<div class="suggest-item" onclick="selectSuggest('${r}', '${inputElem.id}')">${r}</div>`).join('');
+                suggestDiv.style.display = 'block';
+            } else {
+                suggestDiv.style.display = 'none';
+            }
+        }
+
+        function selectSuggest(fullText, inputId) {
+            const inputElem = document.getElementById(inputId);
+            const mode = document.querySelector('input[name="courseAutoConvert"]:checked').value;
+            const courseObj = courseBaseData.find(c => c.full === fullText);
+            if (courseObj) {
+                let converted = fullText;
+                if (mode === 'abbr') converted = userCustomAbbr[courseObj.id] || courseObj.abbr;
+                else if (mode === 'enAbbr') converted = courseObj.enAbbr;
+                inputElem.value = converted;
+                hideSuggest(inputId);
+                afterConversion(inputElem);
+                
+                if (inputId.startsWith('hc')) {
+                    const parts = inputId.split('_');
+                    if (parts.length > 1) updateHistoryCourseAdvanced(parseInt(parts[1]));
+                }
+            }
+        }
+
+        function hideSuggest(inputId = null) {
+            if (inputId) {
+                const d = document.getElementById('suggest_' + inputId);
+                if (d) d.style.display = 'none';
+            } else {
+                document.querySelectorAll('.suggest-list').forEach(d => d.style.display = 'none');
+            }
+        }
+
+        function handleSuggestKeydown(e) {
+            const inputElem = e.target;
+            const suggestDiv = document.getElementById('suggest_' + inputElem.id);
+            if (suggestDiv && suggestDiv.style.display === 'block') {
+                const items = suggestDiv.querySelectorAll('.suggest-item');
+                let activeIdx = Array.from(items).findIndex(item => item.classList.contains('active'));
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (activeIdx < items.length - 1) {
+                        if (activeIdx >= 0) items[activeIdx].classList.remove('active');
+                        items[activeIdx + 1].classList.add('active');
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (activeIdx > 0) {
+                        items[activeIdx].classList.remove('active');
+                        items[activeIdx - 1].classList.add('active');
+                    }
+                } else if (e.key === 'Enter') {
+                    if (activeIdx >= 0) {
+                        e.preventDefault();
+                        items[activeIdx].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    hideSuggest(inputElem.id);
+                }
+            }
+        }
+
+        function applyCourseConversion(inputElem) {
+            const mode = document.querySelector('input[name="courseAutoConvert"]:checked').value;
+            if (mode === 'none') return false;
+            
+            const val = inputElem.value.toLowerCase();
+            if (val.length === 0) return false;
+
+            const matches = Object.keys(courseDictionary).filter(k => k.startsWith(val));
+            const uniqueResults = [...new Set(matches.map(m => courseDictionary[m].full))];
+            
+            if (uniqueResults.length === 1) {
+                const fullText = uniqueResults[0];
+                const courseObj = courseBaseData.find(c => c.full === fullText);
+                let converted = fullText;
+                if (mode === 'abbr') converted = userCustomAbbr[courseObj.id] || courseObj.abbr;
+                else if (mode === 'enAbbr') converted = courseObj.enAbbr;
+                
+                inputElem.value = converted;
+                hideSuggest(inputElem.id);
+                afterConversion(inputElem);
+                return true;
+            }
+            return false;
+        }
+
+        function afterConversion(inputElem) {
+            inputElem.blur();
+
+            let isSection = false;
+            if (inputElem.id.startsWith('hc')) {
+                const idx = inputElem.id.split('_')[1];
+                const checkedRadio = document.querySelector(`input[name="hcType_${idx}"]:checked`);
+                if (checkedRadio) isSection = checkedRadio.value === 'section';
+            } else {
+                isSection = document.querySelector('input[name="courseType"]:checked').value === 'section';
+            }
+            
+            const autoMoveEl = document.getElementById('optAutoMoveToNext');
+            const autoMove = autoMoveEl ? autoMoveEl.checked : true;
+
+            if (isSection && autoMove) {
+                let nextId = null;
+                if (inputElem.id === 'courseName1') nextId = 'courseName2';
+                else if (inputElem.id.startsWith('hc1_')) nextId = inputElem.id.replace('hc1_', 'hc2_');
+                
+                if (nextId) {
+                    const nextElem = document.getElementById(nextId);
+                    if (nextElem && nextElem.parentElement.style.display !== 'none') {
+                        setTimeout(() => {
+                            nextElem.focus();
+                            const len = nextElem.value.length;
+                            nextElem.setSelectionRange(len, len);
+                        }, 10);
+                    }
+                }
+            }
+        }
+
+        function getTeamByAbbr(val) {
+            if (!val) return null;
+            const rows = document.querySelectorAll('.team-input-row');
+            for (let i = 0; i < rows.length; i++) {
+                const abbr = rows[i].querySelector('.abbr').value;
+                if (abbr && abbr === val) {
+                    return { name: rows[i].querySelector('.name').value, bg: teamColors[i % teamColors.length].bg, fg: teamColors[i % teamColors.length].fg };
+                }
+            }
+            return null;
+        }
+
+        function handleInputFocus(e) {
+            const overlay = e.target.nextElementSibling;
+            if (overlay && overlay.classList.contains('team-overlay')) overlay.style.opacity = '0';
+        }
+
+        function handleInputBlur(e) {
+            const val = e.target.value.trim();
+            const matched = getTeamByAbbr(val);
+            const overlay = e.target.nextElementSibling;
+            if (overlay && overlay.classList.contains('team-overlay')) {
+                if (matched) {
+                    overlay.innerText = matched.name; overlay.style.backgroundColor = matched.bg;
+                    overlay.style.color = matched.fg; overlay.style.opacity = '1';
+                } else overlay.style.opacity = '0';
+            }
+        }
+
+        function renderRaceInputGrid() {
+            const container = document.getElementById('newRaceInputGrid');
+            const order = document.querySelector('input[name="inputOrder"]:checked').value;
+            let gridHTML = '';
+            for (let i = 0; i < 24; i++) {
+                let rank = order === 'desc' ? 24 - i : i + 1;
+                gridHTML += `<div class="history-rank-item"><span>${rank}位</span><div style="position:relative; width:100%; height:22px;">
+                    <input type="text" id="newRaceInput_${i}" data-rank="${rank}" 
+                        oninput="handleNewRaceInput(event, ${i})" 
+                        onkeydown="handleNewRaceKeydown(event, ${i})"
+                        onfocus="handleInputFocus(event)" onblur="handleInputBlur(event)">
+                    <div class="team-overlay"></div>
+                </div></div>`;
+            }
+            container.innerHTML = gridHTML;
+        }
+
+        function handleNewRaceInput(e, idx) {
+            const val = e.target.value.trim();
+            const matched = getTeamByAbbr(val);
+            if (matched) {
+                const nextInput = document.getElementById(`newRaceInput_${idx + 1}`);
+                if (nextInput) nextInput.focus();
+                else document.querySelector('.btn-calc').focus();
+            }
+        }
+
+        function handleNewRaceKeydown(e, idx) {
+            if (e.key === 'Backspace' && e.target.value === '') {
+                const prevInput = document.getElementById(`newRaceInput_${idx - 1}`);
+                if (prevInput) prevInput.focus();
+            } else if (e.key === 'Enter') {
+                addRace();
+            }
+        }
+
+        function addRace() {
+            const totalRaces = parseInt(document.getElementById('totalRaces').value) || 12;
+            if (raceHistory.length >= totalRaces) {
+                alert(`すでに総レース数（${totalRaces}レース）に達しているため、これ以上追加できません。`);
+                return;
+            }
+
+            let tokens = new Array(24).fill('?');
+            let hasInput = false;
+            for (let i = 0; i < 24; i++) {
+                const input = document.getElementById(`newRaceInput_${i}`);
+                if (input) {
+                    let val = input.value.trim() || '?';
+                    if (val !== '?') hasInput = true;
+                    let rank = parseInt(input.getAttribute('data-rank'));
+                    tokens[24 - rank] = val;
+                }
+            }
+            if (!hasInput) return;
+            const teamCount = parseInt(document.getElementById('teamCountSelect').value);
+            const expectedPerTeam = 24 / teamCount;
+            const teamMap = {};
+            document.querySelectorAll('.team-input-row').forEach(row => {
+                const a = row.querySelector('.abbr').value; if(a) teamMap[a] = true;
+            });
+            let errorMessages = [];
+            const counts = {}; const unknown = []; let missingCount = 0;
+            tokens.forEach(t => {
+                if (t === '?') missingCount++;
+                else { if (!teamMap[t]) unknown.push(t); counts[t] = (counts[t] || 0) + 1; }
+            });
+            if (missingCount > 0) errorMessages.push(`・未入力の順位が ${missingCount} 箇所あります`);
+            if (unknown.length > 0) errorMessages.push(`・未登録の入力文字: ${[...new Set(unknown)].join(', ')}`);
+            const wrongCounts = [];
+            Object.keys(teamMap).forEach(a => { const c = counts[a] || 0; if (c !== expectedPerTeam) wrongCounts.push(`${a}(${c}個)`); });
+            if (wrongCounts.length > 0) errorMessages.push(`・各チーム ${expectedPerTeam} 個ずつの入力ではありません:\n    ${wrongCounts.join(', ')}`);
+
+            if (errorMessages.length > 0) {
+                if (!confirm("⚠️ 入力内容に以下の注意点があります：\n\n" + errorMessages.join('\n') + "\n\n続行しますか？")) return;
+            }
+            const c1 = document.getElementById('courseName1').value, c2 = document.getElementById('courseName2').value, cType = document.querySelector('input[name="courseType"]:checked').value;
+            let cName = c1; if(cType==='section' && c2) cName += " → " + c2;
+            raceHistory.push({ teams: tokens.join(' '), course: cName });
+            clearRaceInputs(); renderHistory(); updateAll();
+        }
+
+        function clearRaceInputs() {
+            for (let i = 0; i < 24; i++) {
+                const input = document.getElementById(`newRaceInput_${i}`);
+                if (input) { input.value = ''; const overlay = input.nextElementSibling; if(overlay) overlay.style.opacity = '0'; }
+            }
+            document.getElementById('courseName1').value = ''; document.getElementById('courseName2').value = '';
+            if (document.getElementById('newRaceInput_0')) document.getElementById('newRaceInput_0').focus();
+        }
+
+        function updateAll() {
+            const totalRacesElem = document.getElementById('totalRaces');
+            if (parseInt(totalRacesElem.value) < 1 || isNaN(parseInt(totalRacesElem.value))) totalRacesElem.value = 1;
+            const teamCount = parseInt(document.getElementById('teamCountSelect').value);
+            const targetRankElem = document.getElementById('targetRank');
+            
+            let trVal = parseInt(targetRankElem.value);
+            const maxTargetRank = Math.max(1, teamCount - 1);
+            if (isNaN(trVal) || trVal < 1) targetRankElem.value = 1;
+            else if (trVal > maxTargetRank) targetRankElem.value = maxTargetRank;
+
+            const mode = document.querySelector('input[name="displayMode"]:checked').value;
+            const optShowRankText = document.getElementById('optShowRankText').checked;
+            const optShowMyRankPrefix = document.getElementById('optShowMyRankPrefix').checked;
+            const optShowBorderDiffSuffix = document.getElementById('optShowBorderDiffSuffix').checked;
+            document.getElementById('targetMainArea').style.display = (mode === 'target' || optShowBorderDiffSuffix) ? 'block' : 'none';
+            document.getElementById('borderAdvancedConfigs').style.display = (mode === 'target') ? 'block' : 'none';
+
+            const teamMap = {};
+            document.querySelectorAll('.team-input-row').forEach(row => {
+                const a = row.querySelector('.abbr').value, n = row.querySelector('.name').value, c = parseInt(row.querySelector('.correction').value) || 0;
+                if(a) teamMap[a] = { name: n, correction: c };
+            });
+
+            const myTeam = document.getElementById('myTeamSelect').value;
+            const targetRank = parseInt(document.getElementById('targetRank').value) || 6;
+            const threshold = parseInt(document.getElementById('threshold').value) || 0;
+
+            let scores = {}; Object.values(teamMap).forEach(t => scores[t.name] = t.correction);
+            raceHistory.forEach(r => { r.teams.split(/\s+/).forEach((a, i) => { if(teamMap[a]) scores[teamMap[a].name] += pointsTable[i]; }); });
+            let sorted = Object.keys(scores).map(n => ({ name: n, score: scores[n] })).sort((a,b) => b.score - a.score);
+            let myIdx = sorted.findIndex(t => t.name === myTeam), myScore = myIdx !== -1 ? sorted[myIdx].score : null;
+            let borderIdx = (myIdx < targetRank) ? targetRank : targetRank - 1;
+            let borderTeam = sorted[borderIdx] || sorted[sorted.length-1], borderScore = borderTeam ? borderTeam.score : 0;
+
+            let output = []; let currentRank = 1; let uniqueScores = [...new Set(sorted.map(t => t.score))];
+            let myActualRank = 1; let borderActualRank = 1;
+
+            uniqueScores.forEach(s => {
+                let teamsInRank = sorted.filter(t => t.score === s);
+                if (myScore !== null && s > myScore) myActualRank += teamsInRank.length;
+                if (s > borderScore) borderActualRank += teamsInRank.length;
+                let displayNames = []; let hasMyTeam = false;
+                teamsInRank.forEach(t => {
+                    let keep = (mode !== 'target');
+                    if(mode === 'target' && myScore !== null) {
+                        const isMe = t.name === myTeam, isTargetTeam = t.score === borderScore;
+                        if(isMe || isTargetTeam) keep = true;
+                        else {
+                            const activeMode = (myIdx < targetRank) ? document.querySelector('input[name="aboveMode"]:checked').value : document.querySelector('input[name="belowMode"]:checked').value;
+                            let inBetween = (myIdx < targetRank) ? (t.score <= myScore && t.score >= borderScore) : (t.score >= myScore && t.score <= borderScore);
+                            let inThreshold = (myIdx < targetRank) ? (t.score <= myScore && (myScore - t.score) <= threshold) : (t.score >= myScore && (t.score - myScore) <= threshold);
+                            if (activeMode === 'between') keep = inBetween; else if (activeMode === 'both') keep = (inBetween || inThreshold);
+                        }
+                    }
+                    if(keep) { if (t.name === myTeam) { displayNames.push(`【${t.name}】`); hasMyTeam = true; } else displayNames.push(t.name); }
+                });
+                if(displayNames.length > 0) {
+                    let valStr = (mode !== 'normal' && myScore !== null && !hasMyTeam) ? (myScore - s > 0 ? `+${myScore - s}` : `${myScore - s}`) : s;
+                    output.push(optShowRankText ? `${teamsInRank.length>1?'同率':''}${currentRank}位 ${displayNames.join('・')} ${valStr}` : `${displayNames.join('・')} ${valStr}`);
+                }
+                currentRank += teamsInRank.length;
+            });
+
+            let finalOutputStr = (optShowMyRankPrefix && myScore !== null ? `現在${myActualRank}位／` : "") + (output.join('／') || "自チームを登録してください");
+            if (optShowBorderDiffSuffix && myScore !== null) finalOutputStr += `／${borderActualRank}位との点差 ${myScore - borderScore > 0 ? `+${myScore - borderScore}` : myScore - borderScore}`;
+            const rem = Math.max(0, parseInt(document.getElementById('totalRaces').value) - raceHistory.length);
+            finalOutputStr += (raceHistory.length > 0 ? `／${raceHistory[raceHistory.length-1].course} ` : "／ ") + `@${rem}`;
+            if(document.getElementById('showCorrectionText').checked && Object.values(teamMap).some(t=>t.correction!==0)) finalOutputStr += " (補正込み)";
+
+            if (myScore !== null && (mode === 'target' || optShowBorderDiffSuffix)) {
+                let posAbove = 0, strAbove = 0;
+                const memCount = 24 / teamCount, sortedPts = [...pointsTable].sort((a,b) => b-a);
+                let maxP=0, minP=0; 
+                for(let i=0; i<memCount; i++){ maxP+=sortedPts[i]; minP+=sortedPts[sortedPts.length-1-i]; }
+                
+                let myMinFinal = myScore + rem * minP;
+                let myMaxFinal = myScore + rem * maxP;
+
+                sorted.forEach(t => { 
+                    if(t.name === myTeam) return; 
+                    if (rem > 0) {
+                        if(t.score + rem * maxP >= myMinFinal) posAbove++; 
+                        if(t.score + rem * minP > myMaxFinal) strAbove++; 
+                    } else {
+                        if(t.score >= myScore) posAbove++;
+                        if(t.score > myScore) strAbove++;
+                    }
+                });
+
+                if (document.getElementById('showGuaranteeText').checked && posAbove < targetRank) {
+                    finalOutputStr += (targetRank===1 ? " ［勝利確定］ " : " ［通過確定］");
+                } else if (document.getElementById('showDefeatText').checked && strAbove >= targetRank) {
+                    finalOutputStr += " ［敗北確定］";
+                }
+            }
+
+            document.getElementById('resultOutput').innerText = finalOutputStr;
+            saveData();
+            if (!skipAutoCopy) autoCopyResult(finalOutputStr);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast'); toast.innerText = msg; toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function executeCopy(text, msg) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(() => fallbackCopy(text, msg));
+            } else fallbackCopy(text, msg);
+        }
+
+        function fallbackCopy(text, msg) {
+            const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.left = "-9999px";
+            document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showToast(msg); } catch (err) {} document.body.removeChild(ta);
+        }
+
+        function autoCopyResult(text) {
+            if (!text || text === lastCopiedResult) return;
+            lastCopiedResult = text; executeCopy(text, '結果を自動コピーしました');
+        }
+
+        function manualCopy() { const t = document.getElementById('resultOutput').innerText; executeCopy(t, '結果をコピーしました'); lastCopiedResult = t; }
+
+        function toggleHistCourse(i) {
+            const isSection = document.querySelector(`input[name="hcType_${i}"]:checked`).value === 'section';
+            const c1 = document.getElementById(`hc1_${i}`), c2 = document.getElementById(`hc2_${i}`), sep = document.getElementById(`hcSep_${i}`);
+            c1.placeholder = isSection ? "始点" : "コース名"; sep.style.display = isSection ? "inline" : "none";
+            const c2w = document.getElementById(`hc2Wrapper_${i}`);
+            if (c2w) c2w.style.display = isSection ? "flex" : "none";
+            updateHistoryCourseAdvanced(i);
+        }
+
+        function updateHistoryCourseAdvanced(i) {
+            const isSection = document.querySelector(`input[name="hcType_${i}"]:checked`).value === 'section';
+            const c1 = document.getElementById(`hc1_${i}`).value, c2 = document.getElementById(`hc2_${i}`).value;
+            raceHistory[i].course = isSection && c2 ? c1 + " → " + c2 : c1; updateAll();
+        }
+
+        function updateHistoryTeamTokens(raceIdx) {
+            const row = document.getElementById('historyRow_' + raceIdx);
+            const inputs = row.querySelectorAll('.history-rank-grid input');
+            let newTokens = new Array(24).fill('?');
+            inputs.forEach(inp => { newTokens[parseInt(inp.getAttribute('data-idx'))] = inp.value.trim() || '?'; });
+            raceHistory[raceIdx].teams = newTokens.join(' '); updateAll();
+        }
+
+        function deleteRace(i) { raceHistory.splice(i, 1); renderHistory(); updateAll(); }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            const isDesc = (document.querySelector('input[name="inputOrder"]:checked')?.value || 'desc') === 'desc';
+            container.innerHTML = raceHistory.map((r, i) => {
+                let tokens = r.teams.split(/\s+/), gridHTML = '<div class="history-rank-grid">';
+                for(let j = 0; j < 24; j++) {
+                    let rank = isDesc ? 24 - j : j + 1, tokenIdx = 24 - rank, val = (tokens[tokenIdx] === '?') ? '' : (tokens[tokenIdx] || '');
+                    let matched = getTeamByAbbr(val);
+                    gridHTML += `<div class="history-rank-item"><span>${rank}位</span><div style="position:relative; width:100%; height:22px;">
+                        <input type="text" data-idx="${tokenIdx}" value="${val.replace(/"/g, '&quot;')}" onchange="updateHistoryTeamTokens(${i})" onfocus="handleInputFocus(event)" onblur="handleInputBlur(event)">
+                        <div class="team-overlay" style="opacity:${matched?'1':'0'}; background-color:${matched?matched.bg:'transparent'}; color:${matched?matched.fg:'#000'};">${matched?matched.name:''}</div>
+                    </div></div>`;
+                }
+                let cName = r.course || "", isSection = cName.includes(" → "), parts = cName.split(" → "), c1 = parts[0], c2 = parts[1] || "";
+                return `<div class="history-row" id="historyRow_${i}">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><strong>第 ${i+1}レース</strong><button class="btn-delete" onclick="deleteRace(${i})">削除</button></div>
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:5px; font-size:13px; background:#f8f9fa; padding:5px; border-radius:4px; border:1px solid #ddd;">
+                        <label style="margin:0; font-weight:normal; cursor:pointer;"><input type="radio" name="hcType_${i}" value="lap" ${!isSection?'checked':''} onchange="toggleHistCourse(${i})"> 周回</label>
+                        <label style="margin:0; font-weight:normal; cursor:pointer;"><input type="radio" name="hcType_${i}" value="section" ${isSection?'checked':''} onchange="toggleHistCourse(${i})"> 道中</label>
+                        <div style="position:relative; flex:1; display: flex; align-items: center; gap: 5px;">
+                            <input type="text" id="hc1_${i}" class="edit-input" style="margin:0; flex:1;" value="${c1.replace(/"/g, '&quot;')}" autocomplete="off" oninput="handleCourseInput(event, ${i})" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event, ${i})" onkeydown="handleSuggestKeydown(event)">
+                            <div id="suggest_hc1_${i}" class="suggest-list"></div>
+                        </div>
+                        <span id="hcSep_${i}" style="display:${isSection?'inline':'none'};">→</span>
+                        <div style="position:relative; flex:1; display:${isSection?'flex':'none'}; align-items: center; gap: 5px;" id="hc2Wrapper_${i}">
+                            <input type="text" id="hc2_${i}" class="edit-input" style="margin:0; flex:1;" placeholder="終点" value="${c2.replace(/"/g, '&quot;')}" autocomplete="off" oninput="handleCourseInput(event, ${i})" oncompositionstart="handleCompositionStart()" oncompositionend="handleCompositionEnd(event, ${i})" onkeydown="handleSuggestKeydown(event)">
+                            <div id="suggest_hc2_${i}" class="suggest-list"></div>
+                        </div>
+                    </div>${gridHTML}</div>`;
+            }).join('');
+        }
+        
+        function saveData() {
+            const d = {
+                tr: document.getElementById('totalRaces').value, tc: document.getElementById('teamCountSelect').value,
+                my: document.getElementById('myTeamSelect').value, m: document.querySelector('input[name="displayMode"]:checked').value,
+                rank: document.getElementById('targetRank').value, th: document.getElementById('threshold').value,
+                aboveMode: document.querySelector('input[name="aboveMode"]:checked').value,
+                belowMode: document.querySelector('input[name="belowMode"]:checked').value,
+                optRnk: document.getElementById('optShowRankText').checked, optPrf: document.getElementById('optShowMyRankPrefix').checked,
+                optSuf: document.getElementById('optShowBorderDiffSuffix').checked, optGrt: document.getElementById('showGuaranteeText').checked,
+                optDef: document.getElementById('showDefeatText').checked, optOrder: document.querySelector('input[name="inputOrder"]:checked').value,
+                autoConv: document.querySelector('input[name="courseAutoConvert"]:checked').value,
+                optAutoMove: document.getElementById('optAutoMoveToNext') ? document.getElementById('optAutoMoveToNext').checked : true,
+                hist: raceHistory, 
+                teams: Array.from(document.querySelectorAll('.team-input-row')).map(row => ({ a: row.querySelector('.abbr').value, n: row.querySelector('.name').value, c: row.querySelector('.correction').value })),
+                userAbbr: userCustomAbbr
+            };
+            localStorage.setItem('mkCalcDataDetailed_v4', JSON.stringify(d));
+        }
+
+        function loadData() {
+            const s = localStorage.getItem('mkCalcDataDetailed_v4'); if(!s) { renderRaceInputGrid(); return; }
+            const d = JSON.parse(s);
+            document.getElementById('totalRaces').value = d.tr; document.getElementById('teamCountSelect').value = d.tc;
+            document.getElementById('targetRank').value = d.rank; document.getElementById('threshold').value = d.th || 10;
+            if(d.optRnk !== undefined) document.getElementById('optShowRankText').checked = d.optRnk;
+            if(d.optPrf !== undefined) document.getElementById('optShowMyRankPrefix').checked = d.optPrf;
+            if(d.optSuf !== undefined) document.getElementById('optShowBorderDiffSuffix').checked = d.optSuf;
+            if(d.optGrt !== undefined) document.getElementById('showGuaranteeText').checked = d.optGrt;
+            if(d.optDef !== undefined) document.getElementById('showDefeatText').checked = d.optDef;
+            if (d.optOrder) { const r = document.querySelector(`input[name=\"inputOrder\"][value=\"${d.optOrder}\"]`); if(r) r.checked = true; }
+            if (d.aboveMode) { const am = document.querySelector(`input[name=\"aboveMode\"][value=\"${d.aboveMode}\"]`); if(am) am.checked = true; }
+            if (d.belowMode) { const bm = document.querySelector(`input[name=\"belowMode\"][value=\"${d.belowMode}\"]`); if(bm) bm.checked = true; }
+            if (d.autoConv) { const ac = document.querySelector(`input[name=\"courseAutoConvert\"][value=\"${d.autoConv}\"]`); if(ac) ac.checked = true; }
+            if (d.optAutoMove !== undefined) { const amEl = document.getElementById('optAutoMoveToNext'); if(amEl) amEl.checked = d.optAutoMove; }
+            raceHistory = d.hist || [];
+            userCustomAbbr = d.userAbbr || {};
+            renderRaceInputGrid(); renderHistory(); window.savedTeams = d.teams;
+            const modeRad = document.querySelector(`input[name=\"displayMode\"][value=\"${d.m}\"]`); if(modeRad) modeRad.checked = true;
+            setTimeout(() => { if(d.my) document.getElementById('myTeamSelect').value = d.my; updateAll(); }, 100);
+        }
+
+        function resetRaces() { 
+            if(confirm("レース結果と点数補正をすべてリセットしますか？")) { 
+                raceHistory = []; document.querySelectorAll('.team-input-row .correction').forEach(i => i.value = 0);
+                clearRaceInputs(); renderHistory(); updateAll();
+            } 
+        }
+
+        function resetAll() { 
+            if(confirm("設定、チーム情報、履歴をすべて初期化しますか？")) { 
+                skipAutoCopy = true; localStorage.clear(); location.reload(); 
+            } 
+        }
+
+        document.addEventListener('keydown', e => { if(e.ctrlKey && e.keyCode === 13) addRace(); });
+        document.addEventListener('click', e => { 
+            if(!e.target.closest('.course-input-area') && !e.target.closest('.history-row')) {
+                hideSuggest(); 
+            }
+        });
+    </script>
+</body>
+</html>
