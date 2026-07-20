@@ -28,6 +28,8 @@
         .btn-delete:hover { background-color: #4d4d4d; }
         .btn-clear { background-color: #00bcd4;color: white; border: none; cursor: pointer; border-radius: 4px;}
         .btn-clear:hover {background-color: #0097a7;}
+        .btn-OBSwindow {background-color: #9c27b0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; width: 100%;}
+        .btn-OBSwindow:hover {background-color: #7b1fa2; }
 
         .output-box { margin: 0 0 10px 0; padding: 15px; background-color: #f8f9fa; color: #333333; border: 2px solid #6c9bcf; border-radius: 4px; font-weight: bold; font-size: 1.1em; word-break: break-all; min-height: 1.5em; line-height: 1.8; }
         
@@ -116,8 +118,11 @@
     </style>
 </head>
 <body>
-    
-    <h2>マリオカートワールド　即時集計機（２４人対戦用）</h2>
+
+    <h2>
+        マリオカートワールド　即時集計機（24人対戦用）
+        <span style="float: right; font-size: 20px; font-weight: normal; color: #666; margin-top: 8px;">Ver.1.2.0</span>
+    </h2>
 
     <div class="card" style="margin-bottom: 20px;">
         <details id="details-usage">
@@ -142,58 +147,59 @@
                     <div style="margin-top: 1px; font-size: 0.9em; line-height: 1.8; max-width: 1150px; background: #fff; padding: 20px; color: #333;">
                         
                         <p style="margin-top: 0; margin-bottom: 25px; font-size: 1.05em;">
-                            マリオカートワールドの、２４人対戦用の即時集計を作成しました。大会やラウンジなどでぜひ使ってみてください。
+                            マリオカートワールドの、24人対戦用の即時集計を作成しました。大会やラウンジなどでぜひ使ってみてください。
                         </p>    
                                     
                         <div style="background: #f8f9fa; padding: 15px 10px; border: 1px solid #e9ecef; border-radius: 4px; margin-bottom: 30px;">
                             <div style="font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #dee2e6; padding-bottom: 10px; margin-bottom: 20px; color: #212529;">目次</div>
                             
                             <div style="display: flex; flex-direction: column; gap: 15px;">
-                                
+                                                                    
                                 <div style="display: flex; flex-wrap: wrap; align-items: baseline; border-bottom: 1px dashed #dee2e6; padding-bottom: 12px;">
                                     <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">形式・チーム</div>
                                     <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
-                                        <li style="font-size: 1.05em;"><a href="#desc-total-races" style="color: #0056b3; text-decoration: none;">総レース数</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-team-count" style="color: #0056b3; text-decoration: none;">チーム人数</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-my-team" style="color: #0056b3; text-decoration: none;">自チーム</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-input-text" style="color: #0056b3; text-decoration: none;">入力文字</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-team-name" style="color: #0056b3; text-decoration: none;">チーム名</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-score-correct" style="color: #0056b3; text-decoration: none;">点数補正</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-total-races" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-total-races').scrollIntoView({behavior: 'smooth'});">総レース数</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-team-count" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-team-count').scrollIntoView({behavior: 'smooth'});">チーム人数</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-my-team" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-my-team').scrollIntoView({behavior: 'smooth'});">自チーム</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-input-text" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-input-text').scrollIntoView({behavior: 'smooth'});">入力文字</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-team-name" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-team-name').scrollIntoView({behavior: 'smooth'});">チーム名</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-score-correct" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-score-correct').scrollIntoView({behavior: 'smooth'});">点数補正</a></li>
                                     </ul>
                                 </div>
-                        
+                                
                                 <div style="display: flex; flex-wrap: wrap; align-items: baseline; border-bottom: 1px dashed #dee2e6; padding-bottom: 12px;">
                                     <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">レース情報入力</div>
                                     <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
-                                        <li style="font-size: 1.05em;"><a href="#desc-rank-input" style="color: #0056b3; text-decoration: none;">順位入力</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-course-input" style="color: #0056b3; text-decoration: none;">コース入力</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-rank-order" style="color: #0056b3; text-decoration: none;">順位入力順</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-rank-support" style="color: #0056b3; text-decoration: none;">順位自動補完</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-auto-convert" style="color: #0056b3; text-decoration: none;">コース名自動変換</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-auto-cursor" style="color: #0056b3; text-decoration: none;">道中コース自動カーソル移動</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-convert-key" style="color: #0056b3; text-decoration: none;">変換キー設定</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-short-name" style="color: #0056b3; text-decoration: none;">略称変更設定</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-rank-input" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-rank-input').scrollIntoView({behavior: 'smooth'});">順位入力</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-course-input" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-course-input').scrollIntoView({behavior: 'smooth'});">コース入力</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-rank-order" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-rank-order').scrollIntoView({behavior: 'smooth'});">順位入力順</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-rank-support" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-rank-support').scrollIntoView({behavior: 'smooth'});">順位自動補完</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-auto-convert" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-auto-convert').scrollIntoView({behavior: 'smooth'});">コース名自動変換</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-auto-cursor" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-auto-cursor').scrollIntoView({behavior: 'smooth'});">道中コース自動カーソル移動</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-convert-key" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-convert-key').scrollIntoView({behavior: 'smooth'});">変換キー設定</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-short-name" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-short-name').scrollIntoView({behavior: 'smooth'});">略称変更設定</a></li>
                                     </ul>
                                 </div>
-                        
+                                
                                 <div style="display: flex; flex-wrap: wrap; align-items: baseline; border-bottom: 1px dashed #dee2e6; padding-bottom: 12px;">
                                     <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">レース結果・履歴</div>
                                     <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
-                                        <li style="font-size: 1.05em;"><a href="#desc-result-display" style="color: #0056b3; text-decoration: none;">結果表示</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-display-mode" style="color: #0056b3; text-decoration: none;">表示モード</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-target-rank" style="color: #0056b3; text-decoration: none;">目標順位</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-display-info" style="color: #0056b3; text-decoration: none;">表示情報設定</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-display-team" style="color: #0056b3; text-decoration: none;">表示チーム設定</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-race-history" style="color: #0056b3; text-decoration: none;">レース履歴</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-result-display" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-result-display').scrollIntoView({behavior: 'smooth'});">結果表示</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-display-mode" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-display-mode').scrollIntoView({behavior: 'smooth'});">表示モード</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-target-rank" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-target-rank').scrollIntoView({behavior: 'smooth'});">目標順位</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-display-info" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-display-info').scrollIntoView({behavior: 'smooth'});">表示情報設定</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-display-team" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-display-team').scrollIntoView({behavior: 'smooth'});">表示チーム設定</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-obs-scoreboard" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-obs-scoreboard').scrollIntoView({behavior: 'smooth'});">配信用点数表</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-race-history" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-race-history').scrollIntoView({behavior: 'smooth'});">レース履歴</a></li>
                                     </ul>
                                 </div>
-                        
+                                
                                 <div style="display: flex; flex-wrap: wrap; align-items: baseline; padding-bottom: 5px;">
                                     <div style="font-weight: bold; color: #495057; font-size: 1.2em; min-width: 140px; margin-right: 10px; margin-bottom: 5px;">その他</div>
                                     <ul style="margin: 0; padding: 0; list-style-type: none; display: flex; flex-wrap: wrap; gap: 6px 10px; flex: 1;">
-                                        <li style="font-size: 1.05em;"><a href="#desc-reset" style="color: #0056b3; text-decoration: none;">リセット</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-version" style="color: #0056b3; text-decoration: none;">バージョン履歴</a></li>
-                                        <li style="font-size: 1.05em;"><a href="#desc-afterword" style="color: #0056b3; text-decoration: none;">あとがき</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-reset" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-reset').scrollIntoView({behavior: 'smooth'});">リセット</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-version" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-version').scrollIntoView({behavior: 'smooth'});">バージョン履歴</a></li>
+                                        <li style="font-size: 1.05em;"><a href="#desc-afterword" style="color: #0056b3; text-decoration: none;" onclick="event.preventDefault(); document.getElementById('desc-afterword').scrollIntoView({behavior: 'smooth'});">あとがき</a></li>
                                     </ul>
                                 </div>
                                 
@@ -207,7 +213,7 @@
                         <!--総レース数-->
                         <h4 id="desc-total-races" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">総レース数</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li>走行する合計レース数を入力してください。正の整数値が入力できます。初期設定では１２レースに設定されています。</li>
+                            <li>走行する合計レース数を入力してください。正の整数値が入力できます。初期設定では12レースに設定されています。</li>
                         </ul>
                 
                         <!--チーム人数-->
@@ -215,7 +221,7 @@
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
                             <li>チーム人数を選択してください。タッグ、トリプルス、フォーマンセル、６v６v６v６、８v８v８から選択できます。初期設定ではタッグに設定されています。</li>
                             <li>６v６v６v６と８v８v８は、ゲーム内のチーム戦設定から自動で集計されるため、基本的にはタッグ、トリプルス、フォーマンセルでの使用を想定しています。</li>
-                            <li>１２v１２は、今後のアップデートで追加予定です。現在のVerでも、入力するチーム数を２つにすれば、無理やり表示させることは可能です。</li>
+                            <li>12v12は、今後のアップデートで追加予定です。現在のVerでも、入力するチーム数を２つにすれば、無理やり表示させることは可能です。</li>
                         </ul>
                 
                         <!--自チーム-->
@@ -236,7 +242,7 @@
                                 <ul style="padding-left: 20px; margin-top: 3px;">
                                     <li>入力文字が空欄</li>
                                     <li>異なるチームで同じ入力文字が登録されている</li>
-                                    <li>異なるチームで判別のつかない入力文字が登録されている（例：「a」と「ab」）</li>
+                                    <li>異なるチームで判別のつかない入力文字が登録されている（例：『a』と『ab』）</li>
                                 </ul>
                             </li>
                             <li>異なるチームで同じ入力文字が登録された場合、入力中の順位表示や、すでに入力したレース結果に不具合が発生します。その場合は、手動で直さないと解決しないため、ご注意ください。</li>
@@ -273,19 +279,19 @@
                         <!-- 順位入力-->
                         <h4 id="desc-rank-input" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">順位入力</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li>マリオカートワールドでは、２４位から順にせりあがるように順位が表示されるため、２４位からの入力を初期設定にしています。１位からの入力に変更したい場合は、入力オプションから設定可能です。</li>
-                            <li>「入力文字」に設定した文字を入力することで、自動的にチーム名が表示され、次の順位にカーソルが移動します。２４枠に順位が入力された時点で、自動的に結果が集計されます。Deleteキーで、１つ前の順位を消すことも可能です。</li>
+                            <li>マリオカートワールドでは、24位から順にせりあがるように順位が表示されるため、24位からの入力を初期設定にしています。１位からの入力に変更したい場合は、入力オプションから設定可能です。</li>
+                            <li>「入力文字」に設定した文字を入力することで、自動的にチーム名が表示され、次の順位にカーソルが移動します。24枠に順位が入力された時点で、自動的に結果が集計されます。Deleteキーで、１つ前の順位を消すことも可能です。</li>
                             <li>設定した総レース数を超えてレース情報を登録することはできません。</li>
-                            <li>以下の場合には、２４枠に順位が入力されてもレース情報が登録されず、警告が出ます。
+                            <li>以下の場合には、24枠に順位が入力されてもレース情報が登録されず、警告が出ます。
                                 <ul style="padding-left: 20px; margin-top: 3px;">
                                     <li>未登録の入力文字・チーム名が入力されている</li>
                                     <li>入力されたチーム名の数が、チーム人数より多い・少ない</li>
                                 </ul>
-                                これらの警告が出た場合、レース情報を修正することができます。誤ってレース情報を登録してしまった場合も後から修正可能です。</li>
-                            <li>レース情報の修正中は、順位の自動カーソル移動は解除されます。修正が完了したら、「レース情報を登録」ボタンを押してください。</li>   
-                            <li>「レース情報を登録」ボタンを押した時点で、入力した情報に問題がある場合、再度警告が出ます。改めて修正をしてください。</li>
+                                これらの警告が出た場合、レース情報を修正することができます。誤ってレース情報を登録してしまった場合も「レース履歴」から修正可能です。</li>
+                            <li>レース情報の修正中は、順位の自動カーソル移動は解除されます。修正が完了したら、「レース情報を登録」ボタンをクリックしてください。</li>   
+                            <li>「レース情報を登録」ボタンをクリックした時点で、入力した情報に問題がある場合、再度警告が出ます。改めて修正をしてください。</li>
                             <li>順位入力枠は矢印キーで移動可能です。レース情報修正の際にお使いください。</li>
-                            <li>「クリア」ボタンを押すと、入力・修正中の順位がリセットされます。最初から順位を入力したい場合などにお使いください。</li>
+                            <li>「クリア」ボタンをクリックすると、入力・修正中の順位がリセットされます。最初から順位を入力したい場合などにお使いください。</li>
                         </ul>
 
                         <!-- コース入力-->
@@ -300,16 +306,16 @@
                         <!--順位入力順-->
                         <h4 id="desc-rank-order" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">順位入力順</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li>順位入力を２４位から行うか、１位から行うかを変更することができます。初期設定では２４位からの入力に設定されています。</li>
+                            <li>順位入力を24位から行うか、１位から行うかを変更することができます。初期設定では24位からの入力に設定されています。</li>
                             <li>順位入力中にこの設定を変更しても、入力した順位は保存されます。</li>
                         </ul>
                 
                         <!--順位自動補完-->
                         <h4 id="desc-rank-support" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">順位自動補完</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li>順位が２３枠に入力された時点で、２４枠目を自動で補完する機能です。最後の１枠を入力しなくてよいため、チェックを付けておくことを推奨します。</li>
-                            <li>２３枠入力時に何らかのエラーがある場合は、自動補完は解除されます。２４枠目を入力すると警告が出るようになっています。</li>
-                            <li>順位入力を修正している間は、自動補完は解除されます。</li>
+                            <li>順位を入力している際に、残りの空いている順位枠に入るチームが確定した時点で、自動で補完する機能です。入力の手間を省くことができるので、チェックを付けておくことを推奨します。</li>
+                            <li>入力時に何らかのエラーがある場合は、自動補完は解除されます。24枠目を入力すると警告が出るようになっています。</li>
+                            <li>警告表示後の順位入力を修正している間は、自動補完は解除されます。</li>
                         </ul>
 
                         <!--コース名自動変換-->
@@ -325,32 +331,32 @@
                                 </ul>
                             </li>
                             <li>全角半角、大文字小文字、英数ひらがなカタカナを問わず入力できます。一部コースは、漢字も対応しています。</li>
-                            <li>該当するコースが５個以下になった場合、コース名枠の下にサジェスト表示されます。サジェストではクリック操作のほか、矢印キーとEnterキーによる選択も可能です。（例：「CC」と入力された場合は、 ”トロフィーシティー（CC）” と ”プクプクフォールズ（CCF）” がサジェストに表示されます）</li>
+                            <li>該当するコースが５個以下になった場合、コース名枠の下にサジェスト表示されます。サジェストではクリック操作のほか、矢印キーとEnterキーによる選択も可能です。（例：『CC』と入力された場合は、 ”トロフィーシティー（CC）” と ”プクプクフォールズ（CCF）” がサジェストに表示されます）</li>
                             <li>日本語入力の場合、OSのサジェスト変換がコース名のサジェストに覆いかぶさる場合があるため、半角英数での入力を推奨しています。</li>
                         </ul>
 
                         <!--道中コース自動カーソル移動-->
                         <h4 id="desc-auto-cursor" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">道中コース自動カーソル移動</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                        <li>道中コース選択時、始点でのコース名が変換されると、終点に自動でカーソルが移動する機能です。</li>
-                        <li>コース名自動変換で「オフ」を選択している場合、始点入力後にEnterを押すと、終点に自動でカーソルが移動します。</li>
+                            <li>道中コース選択時、始点でのコース名が変換されると、終点に自動でカーソルが移動する機能です。</li>
+                            <li>コース名自動変換で「オフ」を選択している場合、始点入力後にEnterを押すと、終点に自動でカーソルが移動します。</li>
                         </ul>
 
                         <!--変換キー設定-->
                         <h4 id="desc-convert-key" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">変換キー設定</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                        <li>コース名自動変換で「オフ」以外を選択している場合、変換キーに登録した文字を入力すると自動でコース名が表示されます。いわゆる、ユーザ辞書としての使用が可能です。</li>
-                        <li>異なるコース間の変換キーは上下矢印キーで移動可能です。略称への移動はShiftキーを押しながら右矢印キーで移動できます。</li>
-                        <li>変換キーに登録した文字と、内部的に登録されている文字で同じものがある場合、変換キーの方が優先されます。</li>
-                        <li>異なるコースで同じ変換キーが登録された場合は、登録した文字が入力された時点でそれらのコースをサジェストに表示します。</li>
-                        <li>登録した変換キーによっては、内部的に登録されている変換が機能しない場合がございます。特に、長い変換キーは非推奨です。</li>
+                            <li>コース名自動変換で「オフ」以外を選択している場合、変換キーに登録した文字を入力すると自動でコース名が表示されます。いわゆる、ユーザ辞書としての使用が可能です。</li>
+                            <li>異なるコース間の変換キーは上下矢印キーで移動可能です。略称への移動はShiftキーを押しながら右矢印キーで移動できます。</li>
+                            <li>変換キーに登録した文字と、内部的に登録されている文字で同じものがある場合、変換キーの方が優先されます。</li>
+                            <li>異なるコースで同じ変換キーが登録された場合は、登録した文字が入力された時点でそれらのコースをサジェストに表示します。</li>
+                            <li>登録した変換キーによっては、内部的に登録されている変換が機能しない場合がございます。特に、長い変換キーは非推奨です。</li>
                         </ul>
 
                         <!--略称変更設定-->
                         <h4 id="desc-short-name" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">略称変更設定</h4>
                         <ul style="padding-left: 20px; margin-bottom: 20px;">
-                        <li>コース名自動変換で「略称表示」選択時、表示する略称をコースごとに登録できます。初期設定での略称から、自由にカスタマイズして下さい。</li>
-                        <li>異なるコース間の略称は上下矢印キーで移動可能です。略称への移動はShiftキーを押しながら左矢印キーで移動できます。</li>
+                            <li>コース名自動変換で「略称表示」選択時、表示する略称をコースごとに登録できます。初期設定での略称から、自由にカスタマイズして下さい。</li>
+                            <li>異なるコース間の略称は上下矢印キーで移動可能です。略称への移動はShiftキーを押しながら左矢印キーで移動できます。</li>
                         </ul>
                         <p style="margin-top: 5px; margin-bottom: 25px;">
                             変換キーと略称は、「変換キーと略称をリセット」ボタンからリセット可能です。
@@ -363,11 +369,11 @@
                         <!--結果表示-->
                         <h4 id="desc-result-display" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">結果表示</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                        <li>レース情報が登録されると、「現在の順位」に集計結果が表示され、自動でコピーされます。設定の変更によって表示が変わるたびに自動でコピーされるようになっています。</li>
-                        <li>同率のチームは「・」でつないでまとめて表示しています。</li>
-                        <li>表示する情報は、入力オプションから変更できます。末尾の「@n」は、残りレース数を表しています。</li>
-                        <li>「結果をコピー」ボタンを押すことによってコピーすることもできます。</li>
-                        <li>入力文字・チーム名や、登録されたレースにエラーがある場合、色が赤く表示されますので修正を行ってください。</li>
+                            <li>レース情報が登録されると、「現在の順位」に集計結果が表示され、自動でコピーされます。設定の変更などによって表示する情報が変わるたびに自動でコピーされるようになっています。</li>
+                            <li>同率のチームは「・」でつないでまとめて表示しています。</li>
+                            <li>表示する情報は、表示オプションから変更できます。末尾の『@n』は、残りレース数を表しています。</li>
+                            <li>「結果をコピー」ボタンをクリックすることによってコピーすることもできます。</li>
+                            <li>入力文字・チーム名や、登録されたレースにエラーがある場合、色が赤く表示されますので修正を行ってください。</li>
                         </ul>
 
                         <!--表示モード-->
@@ -399,7 +405,7 @@
                         <!--目標順位-->
                         <h4 id="desc-target-rank" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">目標順位</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                        <li>目標としている順位、特に大会などでの通過順位を設定してください。１位から（総チーム数 －１）位まで設定可能です。</li>
+                        <li>目標としている順位、特に、大会などでの通過順位を設定してください。１位から（総チーム数 －１）位まで設定可能です。</li>
                         <li>今後の説明で「ボーダー」という単語が出てきますが、「ボーダー」の意味を以下のように定めておきます。<br>
                             <ul style="padding-left: 20px; margin-top: 3px;">
                                 <li style="margin-bottom: 3px;">
@@ -421,28 +427,28 @@
                                     <div style="display: flex; align-items: flex-start;">
                                         <span style="flex-shrink: 0; width: 18em;">「順位を表示する」</span>
                                         <span style="flex-shrink: 0;">：</span>
-                                        <span>各チームの順位をチーム名の先頭に表示します。同率のチームは、「同率○位」と表示します。</span>
+                                        <span>各チームの順位をチーム名の先頭に表示します。同率のチームは、『同率○位』と表示します。</span>
                                     </div>
                                 </li>
                                 <li style="margin-bottom: 8px;">
                                     <div style="display: flex; align-items: flex-start;">
                                         <span style="flex-shrink: 0; width: 18em;">「現在順位を表示」</span>
                                         <span style="flex-shrink: 0;">：</span>
-                                        <span>自チームの現在順位を集計結果の先頭に表示します。同率のチームがいる場合は、「現在同率○位」と表示します。</span>
+                                        <span>自チームの現在順位を集計結果の先頭に表示します。同率のチームがいる場合は、『現在同率○位』と表示します。</span>
                                     </div>
                                 </li>
                                 <li style="margin-bottom: 8px;">
                                     <div style="display: flex; align-items: flex-start;">
                                         <span style="flex-shrink: 0; width: 18em;">「ボーダーとの点差を表示」</span>
                                         <span style="flex-shrink: 0;">：</span>
-                                        <span>自チームとボーダーの点差を集計結果の末尾付近に表示します。自チームがボーダーのときは、「○位との点差 ±0」と表示します。</span>
+                                        <span>自チームとボーダーのチームの点差を集計結果の末尾付近に表示します。自チームがボーダーのときは、『○位との点差 ±0』と表示します。</span>
                                     </div>
                                 </li>
                                 <li style="margin-bottom: 8px;">
                                     <div style="display: flex; align-items: flex-start;">
                                         <span style="flex-shrink: 0; width: 18em;">「ボーダーを**で強調する」</span>
                                         <span style="flex-shrink: 0;">：</span>
-                                        <span>ボーダーの順位・チーム・点数（点差）を「**」ではさんで強調します。</span>
+                                        <span>ボーダーの順位・チーム名・点数（点差）を「**」ではさんで強調します。</span>
                                     </div>
                                 </li>
                                 <li style="margin-bottom: 8px;">
@@ -454,21 +460,21 @@
                                 </li>
                                 <li style="margin-bottom: 8px;">
                                     <div style="display: flex; align-items: flex-start;">
-                                        <span style="flex-shrink: 0; width: 18em;">「点数補正時に「補正込み」を表示」</span>
+                                        <span style="flex-shrink: 0; width: 18em;">「点数補正時に『補正込み』を表示」</span>
                                         <span style="flex-shrink: 0;">：</span>
-                                        <span>点数補正を行っている場合に、末尾に「（補正込み）」を表示します。</span>
+                                        <span>点数補正を行っている場合に、末尾に『（補正込み）』を表示します。</span>
                                     </div>
                                 </li>
                                 <li style="margin-bottom: 8px;">
                                     <div style="display: flex; align-items: flex-start;">
-                                        <span style="flex-shrink: 0; width: 18em;">「「通過/勝利確定」を表示」</span>
+                                        <span style="flex-shrink: 0; width: 18em;">「『通過/勝利確定』を表示」</span>
                                         <span style="flex-shrink: 0;">：</span>
-                                        <span>すべてのレースが終わるまでにボーダー圏内が確定したときに、集計結果の末尾に確定表示を出します。目標順位が１位のときは「勝利確定」、２位以下のときは「通過確定」を表示します。</span>
+                                        <span>すべてのレースが終わるまでにボーダー圏内が確定したときに、集計結果の末尾に確定表示を出します。目標順位が１位のときは『勝利確定』、２位以下のときは『通過確定』を表示します。</span>
                                     </div>
                                 </li>
                                 <li style="margin-bottom: 8px;">
                                     <div style="display: flex; align-items: flex-start;">
-                                        <span style="flex-shrink: 0; width: 18em;">「「敗北確定」を表示」</span>
+                                        <span style="flex-shrink: 0; width: 18em;">「『敗北確定』を表示」</span>
                                         <span style="flex-shrink: 0;">：</span>
                                         <span>すべてのレースが終わるまでにボーダー圏外が確定したときに、集計結果の末尾に確定表示を出します。</span>
                                     </div>
@@ -479,32 +485,73 @@
                         <!--表示チーム設定-->
                         <h4 id="desc-display-team" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">表示チーム設定</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li style="margin-bottom: 8px;">
-                                <div style="display: flex; align-items: flex-start;">
-                                    <span style="flex-shrink: 0; width: 31.5em;">「自チームとボーダーのチームのみ表示」</span>
-                                    <span style="flex-shrink: 0;">：</span>
-                                    <span>自チームとボーダーのチームだけを表示します。最低限の情報のみ表示したい場合に選択してください。</span>
-                                </div>
-                            </li>
-                            <li style="margin-bottom: 8px;">
-                                <div style="display: flex; align-items: flex-start;">
-                                    <span style="flex-shrink: 0; width: 31.5em;">「ボーダーまでの全チームを表示」</span>
-                                    <span style="flex-shrink: 0;">：</span>
-                                    <span>自チームからボーダーまでのすべてのチームを表示します。ボーダー争いをしているチームを特に表示したい場合に選択してください。</span>
-                                </div>
-                            </li>
-                            <li style="margin-bottom: 8px;">
-                                <div style="display: flex; align-items: flex-start;">
-                                    <span style="flex-shrink: 0; width: 31.5em;">「ボーダーまでの全チームとボーダー外の指定点差内のチームを表示」</span>
-                                    <span style="flex-shrink: 0;">：</span>
-                                    <span>ボーダー方向のチームのうち、指定した点差に収まるチームをすべて表示します。上記に加えて、ボーダー付近の点差が近いチームも表示したい場合に選択してください。</span>
-                                </div>
-                            </li>
-                            <li>「ボーダーまでの全チームとボーダー外の指定点差内のチームを表示」選択時、非負整数値の点差を指定することが可能です。初期設定では、１０点に設定されています。</li>
+                            <li>「目標順位特化表示」選択時、表示するチームを設定することができます。特に、タッグ戦ではチーム数が多いため、表示する情報を減らしたいときにお使いください。</li>
+                            <ul style="padding-left: 20px; margin-top: 3px;">
+                                    <li style="margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: flex-start;">
+                                            <span style="flex-shrink: 0; width: 31.5em;">「自チームとボーダーのチームのみ表示」</span>
+                                            <span style="flex-shrink: 0;">：</span>
+                                            <span>自チームとボーダーのチームだけを表示します。最低限の情報のみ表示したい場合に選択してください。</span>
+                                        </div>
+                                    </li>
+                                    <li style="margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: flex-start;">
+                                            <span style="flex-shrink: 0; width: 31.5em;">「ボーダーまでの全チームを表示」</span>
+                                            <span style="flex-shrink: 0;">：</span>
+                                            <span>自チームからボーダーまでのすべてのチームを表示します。ボーダー争いをしているチームを特に表示したい場合に選択してください。</span>
+                                        </div>
+                                    </li>
+                                    <li style="margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: flex-start;">
+                                            <span style="flex-shrink: 0; width: 31.5em;">「ボーダーまでの全チームとボーダー外の指定点差内のチームを表示」</span>
+                                            <span style="flex-shrink: 0;">：</span>
+                                            <span>ボーダー方向のチームのうち、指定した点差に収まるチームをすべて表示します。上記に加え、ボーダー付近の点差が近いチームも表示したい場合に選択してください。</span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            <li>「ボーダーまでの全チームとボーダー外の指定点差内のチームを表示」選択時、非負整数値の点差を指定することが可能です。初期設定では、10点に設定されています。</li>
                         </ul>
 
+                        <!--配信用点数表-->
+                        <h4 id="desc-obs-scoreboard" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">配信用点数表</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 10px;">
+                            <li>「配信用点数表」ボタンをクリックすると点数表ウィンドウが生成されます。各配信ツールで背景色を透過してご使用ください。</li>
+                            <li>点数表には「チーム名」「合計点数」「残りレース数」のみが表示されます（※表示モードや表示オプションでの設定は適用されません）。</li>
+                            <li>結果の更新を点数表に反映させるには、点数表ウィンドウを一度読み込む必要があります。</li>
+                            <li>チーム数が７以上の場合は、点数の高い順に左から２列のレイアウトに調整されます。</li>
+                            <li>「レースと点数補正をリセット」または「設定を初期状態にする」を実行すると、点数表ウィンドウは自動的に閉じます。</li>
+                        </ul>
+
+                        <!-- OBS設定-->
+                        <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 16px; margin-top: 15px; line-height: 1.6;">
+                            <h5 style="margin-top: 0; margin-bottom: 4px; font-size: 1em; color: #212529; font-weight: bold;">
+                                【配信画面上に点数表を載せる方法】
+                            </h5>
+                            <p style="font-size: 0.9em; color: #6c757d; margin-top: 0; margin-bottom: 12px;">
+                                ※配信ツールは「OBS Studio」を想定しています。
+                            </p>
+                            <ol style="padding-left: 20px; margin-bottom: 0; color: #495057;">
+                                <li style="margin-bottom: 8px;">「配信用点数表」ボタンをクリックし、点数表ウィンドウを開いておきます。</li>
+                                <li style="margin-bottom: 8px;">OBS Studioの「ソース」欄の下側にある 「＋」ボタンを押し、「ウィンドウキャプチャ」を選択します。</li>
+                                <li style="margin-bottom: 8px;">新規作成から適当な名前を入力し、「OK」をクリックします。</li>
+                                <li style="margin-bottom: 8px;">「ウィンドウ」から「配信用点数表」を選択し、「OK」をクリックします。</li>
+                                <li style="margin-bottom: 8px;">追加したソースを右クリックして「フィルタ」を開き、「エフェクトフィルタ」の「＋」ボタンから「クロマキー」を追加します。</li>
+                                <li style="margin-bottom: 8px;">色キーの種類を「緑」に設定して「閉じる」をクリックします。<br>
+                                    <span style="font-size: 0.9em; color: #6c757d;">※既定値のままで背景がきれいに透過されるようになっていますが、必要に応じて「類似性」等を微調整してください。</span>
+                                </li>
+                                <li style="margin-bottom: 0;">画面上の配置を調整します（画面右上を推奨）。<br>
+                                    <span style="font-size: 0.9em; color: #6c757d;">※点数表の上部にブラウザの情報（タブなど）が表示されてしまう場合は、以下のいずれかの方法で不要な部分を隠してください。</span>
+                                    <ul style="margin-top: 6px; margin-bottom: 0; padding-left: 20px; font-size: 0.9em; color: #6c757d; list-style-type: disc;">
+                                        <li style="margin-bottom: 6px;"><strong>移動してうまく隠す：</strong> 配信画面の枠外にはみ出させるように配置する</li>
+                                        <li style="margin-bottom: 6px;"><strong>トリミング：</strong> OBS上でAltキーを押しながら枠線をドラッグして削る</li>
+                                        <li style="margin-bottom: 0;"><strong>全画面表示：</strong> 点数表のウィンドウ自体をF11キー等で全画面表示にする</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
                         <!--レース履歴-->
-                        <h4 id="desc-race-history" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">レース履歴</h4>
+                        <h4 id="desc-race-history" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; font-size: 1em; color: #343a40;">レース履歴</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
                             <li>登録したレース情報を参照することができます。</li>
                             <li>登録したレース情報を修正することができます。順位・コース名入力枠を選択して、正しいレース情報を入力してください。</li>
@@ -535,29 +582,31 @@
                                     </li>
                                 </ul> 
                             </li>
-                            <li>「クリア」ボタンを押すと、そのレースの結果がリセットされます。レース情報を最初から修正したい場合などにお使いください。</li>
-                            <li>「削除」ボタンを押すと、そのレースの結果が削除されます。入力後にそのレースがカウントされなかった場合などにお使いください。</li>
+                            <li>「クリア」ボタンをクリックすると、そのレースの結果がリセットされます。レース情報を最初から修正したい場合などにお使いください。</li>
+                            <li>「削除」ボタンをクリックすると、そのレースの結果が削除されます。入力後にそのレースがカウントされなかった場合などにお使いください。</li>
                         </ul>
                                      
                         <h3 style="background: #e9ecef; border-left: 4px solid #6c757d; padding: 8px 12px; margin-top: 0; margin-bottom: 20px; font-size: 1.1em; color: #212529;">その他</h3>
 
                         <h4 id="desc-reset" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">リセット</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li>「レースと点数補正をリセット」を押すと、入力中のレース情報、レース履歴、点数補正がリセットされます。すべてのレースが終わった後に、また新しく集計を始めたいときなどにお使いください。</li>
-                            <li>「初期状態にリセット」を押すと、すべての設定がリセットされます。ユーザーが設定した変換キーや略称などもリセットされますので、注意してください。</li>
+                            <li>「レースと点数補正をリセット」を実行すると、入力中のレース情報、レース履歴、点数補正がリセットされます。すべてのレースが終わった後に、また新しく集計を始めたいときなどにお使いください。</li>
+                            <li>「設定を初期状態にする」を実行すると、すべての設定がリセットされます。ユーザーが設定した変換キーや略称などもリセットされますので、ご注意ください。</li>
                             <li>リセットの際を含み、画面上部に警告が出ているタイミングで再読み込みをすると、レース情報の入力ができなくなる場合がございますので、お控えください。</li>
                         </ul>
 
                         <h4 id="desc-version" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">バージョン履歴</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li>Ver1.1.1　軽微な不具合を修正し、詳細な説明の文章を一部変更しました。</li>
-                            <li>Ver1.1.0　機能を多数追加しました。使用方法と詳細な説明を追加しました。</li>
-                            <li>Ver1.0.0　リリースしました。</li>
+                            <li>Ver.1.2.0　配信用の点数表を生成する機能を追加しました。順位の自動補完機能を調整しました。</li>
+                            <li>Ver.1.1.1　軽微な不具合を修正し、詳細な説明の文章を一部変更しました。</li>
+                            <li>Ver.1.1.0　機能を多数追加しました。使用方法と詳細な説明を追加しました。</li>
+                            <li>Ver.1.0.0　リリースしました。</li>
                         </ul>
 
                         <h4 id="desc-afterword" style="border-bottom: 1px solid #dee2e6; padding-bottom: 5px; margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #343a40;">あとがき</h4>
                         <ul style="padding-left: 20px; margin-bottom: 25px;">
-                            <li>本ツールは、「マリオカート8DX 即時集計機」を参考に作成しました。製作者の@GungeeSpla様に、この場をお借りして心よりお礼申し上げます。</li>
+                            <li>本ツールは、『マリオカート8DX 即時集計機』を参考に作成しました。製作者の@GungeeSpla氏に、この場をお借りしてお礼申し上げます。</li>
+                            <li>本ツールの配信用点数表は、くさあん氏（@kusaannanora）が『マリオカート8 デラックス』で使用されていた自動即時集計のレイアウトを参考に作成いたしました。この場をお借りしてお礼申し上げます。</li>
                             <li>本ツールはPCでのご利用を推奨しております。万が一、不具合等を発見された場合や、機能追加のご要望などがございましたら、@rqc3189 までお知らせいただけますと幸いです。</li>
                         </ul>
                     
@@ -573,16 +622,16 @@
         <div class="sidebar">
             <div class="card">
                 <div style="margin-bottom: 15px;">
-                    <label style="margin: 0;">🚗 レース形式</label>
+                    <label style="margin: 0;">レース形式</label>
                 </div>
                 <div class="settings-row" style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
-                        <label>🏁 総レース数</label>
+                        <label>総レース数</label>
                         <input type="number" class="full-width" id="totalRaces" value="12" min="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll(event)">
                     </div>
                     
                     <div style="flex: 2;">
-                        <label>👥 チーム人数</label>
+                        <label>チーム人数</label>
                         <select class="full-width" id="teamCountSelect" onchange="buildTeamInputs()">
                             <option value="12" selected>タッグ(２人)</option>
                             <option value="8">トリプルス(３人)</option>
@@ -593,11 +642,11 @@
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
-                    <label style="white-space: nowrap; margin-bottom: 0;">🌟 自チーム</label>
+                    <label style="white-space: nowrap; margin-bottom: 0;">自チーム</label>
                     <select class="full-width" id="myTeamSelect" style="margin-bottom: 0;" onchange="updateAll(event)"></select>
                 </div>
                 <details id="details-team-settings" class="team-settings">
-                    <summary>👥 入力文字・チーム名・点数補正設定</summary>
+                    <summary>入力文字・チーム名・点数補正設定</summary>
                     <div class="team-inputs-wrapper">
                         <div class="col-header"><span class="abbr">入力文字</span><span class="name">チーム名</span><span class="correction">点数補正</span></div>
                         <div id="teamInputsContainer"></div>
@@ -614,7 +663,7 @@
         <div class="main">
             <div class="card" style="position: relative;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <label style="margin: 0;">✍️ レース情報入力</label>
+                    <label style="margin: 0;">レース情報入力</label>
                     <button class="btn-clear" style="padding: 2px 8px; font-size: 11px;" onclick="clearCurrentRaceInput()">クリア</button></div>
                 <div id="newRaceInputGrid" class="history-rank-grid" style="margin-bottom: 15px;"></div>
 
@@ -656,7 +705,7 @@
                 -->
                 
                 <details class="input-options">
-                    <summary>⚙️ 入力オプション</summary>
+                    <summary>入力オプション</summary>
                     <div class="input-order-row" style="margin-top: 10px;">
                         <strong>順位入力順:</strong>
                         <label><input type="radio" name="inputOrder" value="desc" checked onchange="renderRaceInputGrid(); renderHistory(); saveData();"> 24位→1位</label>
@@ -664,7 +713,7 @@
                     </div>
                     <div class="input-order-row" style="margin-top: 7px;">
                         <strong>順位自動補完:</strong>
-                        <label><input type="checkbox" id="optAutoFill23"  onchange="saveData();"> 24枠目を自動で補完</label>                   
+                        <label><input type="checkbox" id="optAutoFill23"  onchange="saveData();"> 空いている順位を自動で補完</label>                   
                      </div>
                     <div class="input-order-row">
                         <strong>コース名自動変換表示:</strong>
@@ -682,7 +731,9 @@
             </div>
 
             <div class="card">
-                <label>📊 現在の順位</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; ">
+                    <label>現在の順位</label>
+                    <button class="btn-OBSwindow" style="padding: 2px 10px; width: auto;;" onclick="openObsWindow()">配信用点数表</button></div>
                 <div id="resultOutput" class="output-box"></div>
                 <button class="btn-copy" onclick="manualCopy()">結果をコピー</button>
                 <div class="mode-selector">
@@ -708,23 +759,23 @@
                         </div>
                     </div>
                     <details class="output-options">
-                        <summary>⚙️ 表示オプション</summary>
+                        <summary>表示オプション</summary>
                         <div class="config-group">
-                            <strong>📝 表示情報設定</strong>
+                            <strong>表示情報設定</strong>
                             <label class="inline-label"><input type="checkbox" id="optShowRankText" onchange="updateAll(event);saveData();"> 順位を表示する</label>
                             <label class="inline-label"><input type="checkbox" id="optShowMyRankPrefix" onchange="updateAll(event);saveData();"> 現在順位を表示する</label>
                             <label class="inline-label"><input type="checkbox" id="optShowBorderDiffSuffix" onchange="updateAll(event);saveData();"> ボーダーとの点差を表示する</label>
                             <label class="inline-label"><input type="checkbox" id="optHighlightBorder" onchange="updateAll(event);saveData();"> ボーダーを**で強調する</label>   
                             <label class="inline-label"><input type="checkbox" id="optHighlightMyTeam" onchange="updateAll(event);saveData();"> 自チームを【】で強調する</label>
-                            <label class="inline-label"><input type="checkbox" id="showCorrectionText" onchange="updateAll(event);saveData();"> 点数補正時に「補正込み」を表示</label>
-                            <label class="inline-label"><input type="checkbox" id="showGuaranteeText" onchange="updateAll(event);saveData();"> 「通過/勝利確定」を表示</label>
-                            <label class="inline-label"><input type="checkbox" id="showDefeatText" onchange="updateAll(event);saveData();"> 「敗北確定」を表示</label>
+                            <label class="inline-label"><input type="checkbox" id="showCorrectionText" onchange="updateAll(event);saveData();"> 点数補正時に『補正込み』を表示</label>
+                            <label class="inline-label"><input type="checkbox" id="showGuaranteeText" onchange="updateAll(event);saveData();"> 『通過/勝利確定』を表示</label>
+                            <label class="inline-label"><input type="checkbox" id="showDefeatText" onchange="updateAll(event);saveData();"> 『敗北確定』を表示</label>
                         </div>
                         
                         <details id="borderAdvancedConfigs" style="display:none; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; margin-top: 10px;">
-                            <summary style="font-weight: bold; cursor: pointer; color: #333; font-size: 13.5px; outline: none;">🎯 表示チーム設定</summary>
+                            <summary style="font-weight: bold; cursor: pointer; color: #333; font-size: 13.5px; outline: none;">表示チーム設定</summary>
                             <div class="config-group" style="margin-top: 10px;">
-                                <strong>📈 ボーダー圏内の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位の1個下と比較）</span></strong>
+                                <strong>ボーダー圏内の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位の1個下と比較）</span></strong>
                                 <div class="radio-group">
                                     <label><input type="radio" name="aboveMode" value="none" checked onchange="updateAll(event)"> 自チームとボーダー点差のみ表示</label>
                                     <label><input type="radio" name="aboveMode" value="between" onchange="updateAll(event)"> ボーダーまでの全チームを表示</label>
@@ -732,7 +783,7 @@
                                 </div>
                             </div>
                             <div class="config-group">
-                                <strong>📉 ボーダー圏外の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位と比較）</span></strong>
+                                <strong>ボーダー圏外の時 <span style="font-size: 12px; color: #666; font-weight: normal; margin-left: 10px;">（目標順位と比較）</span></strong>
                                 <div class="radio-group">
                                     <label><input type="radio" name="belowMode" value="none" checked onchange="updateAll(event)"> 自チームとボーダー点差のみ表示</label>
                                     <label><input type="radio" name="belowMode" value="between" onchange="updateAll(event)"> ボーダーまでの全チームを表示</label>
@@ -740,7 +791,7 @@
                                 </div>
                             </div>
                             <div class="config-group">
-                                <strong>📏 点差指定</strong>
+                                <strong>点差指定</strong>
                                 自チームからの点差: <input type="number" id="threshold" value="10" min="0" style="width: 50px;" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateAll(event)"> 点以内を表示対象とする
                             </div>
                         </details>
@@ -749,7 +800,7 @@
             </div>
 
             <div class="card">
-                <label>📜 レース履歴</label>
+                <label>レース履歴</label>
                 <div id="historyContainer" class="history-container"></div>
             </div>
         </div>
@@ -965,7 +1016,7 @@
 
         // 入力文字の書き換え
         function handleAbbrInput(e, idx) {
-            // ★追加：入力された半角・全角スペースをすべて削除して入力枠に反映
+            // 入力された半角・全角スペースをすべて削除して入力枠に反映
             e.target.value = e.target.value.replace(/[\s　]+/g, '');
             const newAbbr = e.target.value.trim();
             let historyChanged = false;
@@ -1076,7 +1127,6 @@
                     } else if (field === 'name') {
                         targetField = 'abbr';
                     }
-                    // ★ここにあった「abbrから左へ行こうとすると、上の行のcorrectionへ移動する処理」を削除しました（左端でストップします）
 
                 } else if (e.key === "ArrowRight") {
                     if (field === 'abbr') {
@@ -1084,7 +1134,6 @@
                     } else if (field === 'name') {
                         targetField = 'correction';
                     }
-                    // ★ここにあった「correctionから右へ行こうとすると、下の行のabbrへ移動する処理」を削除しました（右端でストップします）
                 }
 
                 if (targetIndex !== index || targetField !== field) {
@@ -1211,11 +1260,11 @@
                     if (abbrErrors.prefix) abbrMsgs.push('チームの判別がつかない入力文字があります');
 
                     let nameMsgs = [];
-                    // ★追加：チーム名空欄のメッセージ
+                    // チーム名空欄のメッセージ
                     if (nameErrors.empty) nameMsgs.push('未入力の箇所があります'); 
                     if (nameErrors.duplicate) nameMsgs.push('チーム名が重複しています');
 
-                    // ▼ 縦に並べるための指定（flex-direction: column;）を追加し、隙間（gap）を8pxに調整しました
+                    // ▼縦に並べるための指定
                     let html = '<div style="display: flex; flex-direction: column; gap: 8px; text-align: left; width: fit-content; ">';                    
                     if (abbrMsgs.length > 0) html += `<div>【入力文字のエラー】<br>${abbrMsgs.join('<br>')}</div>`;
                     if (nameMsgs.length > 0) html += `<div>【チーム名のエラー】<br>${nameMsgs.join('<br>')}</div>`;
@@ -1288,7 +1337,7 @@
             }, 10);
         }
 
-        // 辞書を2種類に分けて管理します
+        // 辞書を2種類に分けて管理
         let defaultDictionary = {};
         let customDictionary = {};
 
@@ -1330,7 +1379,7 @@
             const container = document.getElementById('customAbbrContainer');
             if (!container) return;
 
-            // ★現在の開閉状態を記憶（すでに開いていたら true になる）
+            // 現在の開閉状態を記憶（すでに開いていたら true になる）
             const existingDetails = container.querySelector('details');
             const isOpen = existingDetails ? existingDetails.open : (localStorage.getItem('customAbbrDetailsOpen') === 'true');
             const openAttr = isOpen ? 'open' : ''; // 開いていた場合は 'open' 属性を付与
@@ -1625,7 +1674,7 @@
         }
 
 
-        // 自動変換ロジック
+        // 自動変換機能
         function applyCourseConversion(inputElem) {
             const modeElem = document.querySelector('input[name="courseAutoConvert"]:checked');
             if (!modeElem) return false;
@@ -1757,7 +1806,7 @@
             // 入力文字で見つからなかった場合のみ、「チーム名（name）」で一致するチームを探す
             for (let i = 0; i < rows.length; i++) {
                 const teamName = rows[i].querySelector('.name').value;
-                const abbr = rows[i].querySelector('.abbr').value; // ★ ここでも略称を取得
+                const abbr = rows[i].querySelector('.abbr').value; // ここでも略称を取得
                 if (teamName && teamName === val) {
                     return { 
                         abbr: abbr, 
@@ -1826,7 +1875,7 @@
             const container = document.getElementById('newRaceInputGrid');
             if (!container) return;
 
-            // ★ 修正ポイント1：現在の入力値を「順位（rank）」に紐づけて一時保存する
+            // 現在の入力値を「順位（rank）」に紐づけて一時保存する
             let tempValues = {};
             for (let i = 0; i < 24; i++) {
                 const input = document.getElementById(`newRaceInput_${i}`);
@@ -1850,7 +1899,7 @@
             }
             container.innerHTML = gridHTML;
 
-            // ★ 修正ポイント2：保存しておいた入力値を、同じ「順位（rank）」の枠に正しく入れ直す
+            // 保存しておいた入力値を、同じ「順位（rank）」の枠に正しく入れ直す
             for (let i = 0; i < 24; i++) {
                 const input = document.getElementById(`newRaceInput_${i}`);
                 if (input) {
@@ -1911,10 +1960,10 @@
             if (typeof saveData === 'function') saveData();
         }
 
-        // 24枠目自動補完
+        // 残り枠自動補完
         function checkAutoAdd() {
             let filledCount = 0;
-            let emptyIdx = -1;
+            let emptyIndices = [];
             let currentInputs = [];
 
             for (let i = 0; i < 24; i++) {
@@ -1923,7 +1972,7 @@
                     filledCount++;
                     currentInputs.push(input.value.trim());
                 } else {
-                    emptyIdx = i;
+                    emptyIndices.push(i); // 空いている枠のインデックスを記録
                 }
             }
 
@@ -1945,36 +1994,43 @@
             const autoFillCheckbox = document.getElementById('optAutoFill23');
             const isAutoFillEnabled = autoFillCheckbox ? autoFillCheckbox.checked : true;
 
-            // 23枠目自動補完
-            if (filledCount === 23 && emptyIdx !== -1 && !isErrorMode && isAutoFillEnabled) {
+            // 残りチーム確定時の自動補完処理
+            if (emptyIndices.length > 0 && !isErrorMode && isAutoFillEnabled) {
                 let hasError = false;
                 currentInputs.forEach(val => {
                     if (teamMap[val] !== undefined) {
                         teamMap[val]++;
                     } else {
-                        hasError = true;
+                        hasError = true; // 登録されていないタグが入っている場合
                     }
                 });
 
                 if (!hasError) {
-                    let missingTeam = null;
-                    let canAutoFill = true;
-
+                    // まだ必要人数（expectedPerTeam）に達していないチームを抽出
+                    const remainingTeams = [];
                     for (const [abbr, count] of Object.entries(teamMap)) {
                         if (count > expectedPerTeam) {
-                            canAutoFill = false;
+                            hasError = true; // 上限を超えて入力されている場合
                             break;
-                        } else if (count === expectedPerTeam - 1) {
-                            missingTeam = abbr;
+                        } else if (count < expectedPerTeam) {
+                            remainingTeams.push(abbr);
                         }
                     }
 
-                    if (canAutoFill && missingTeam) {
-                        const input = document.getElementById(`newRaceInput_${emptyIdx}`);
-                        input.value = missingTeam;
-                        handleInputBlur({ target: input });
-                        filledCount++;
-                        currentInputs.push(missingTeam);
+                    // エラーがなく、かつ「残りが必要なチームが1種類だけ」になった場合（＝枠が確定）
+                    if (!hasError && remainingTeams.length === 1) {
+                        const targetTeam = remainingTeams[0];
+                        
+                        // 空いているすべての枠に確定チームを自動入力
+                        emptyIndices.forEach(idx => {
+                            const input = document.getElementById(`newRaceInput_${idx}`);
+                            input.value = targetTeam;
+                            handleInputBlur({ target: input });
+                        });
+
+                        // カウントを更新して24枠完了処理へ流す
+                        filledCount = 24;
+                        emptyIndices = [];
                     }
                 }
             }
@@ -2006,13 +2062,9 @@
                 }
 
                 if (isErrorMode) {
-                    // ▼ 修正中はエラーがあってもなくても絶対に自動追加しない
-                    // ボタンを表示したままにし、ユーザーの手動追加を待つ
                     if (btn) btn.style.display = 'block';
                 } else {
-                    // ▼ 初回の入力完了時
                     if (hasError) {
-                        // 初回でエラーがあった場合はエラーモードに突入し、一度だけダイアログを出す
                         isErrorMode = true; 
                         if (btn) btn.style.display = 'block';
                         
@@ -2021,7 +2073,6 @@
                             setTimeout(() => addRace(), 50); 
                         }
                     } else {
-                        // エラーなしで成功した場合は自動追加
                         if (btn) btn.style.display = 'none';
                         if (!hasAttemptedAutoAdd) {
                             hasAttemptedAutoAdd = true;
@@ -2030,13 +2081,9 @@
                     }
                 }
             } else {
-                // 24個未満になった場合
                 if (isErrorMode) {
-                    // 修正のために文字を消して24個未満になった場合は、
-                    // フラグをリセットせずボタンも表示したままにする（自動追加を防ぐため）
                     if (btn) btn.style.display = 'block';
                 } else {
-                    // 初回入力中でまだ24個埋まっていない場合
                     if (btn) btn.style.display = 'none';
                     hasAttemptedAutoAdd = false;
                 }
@@ -2303,7 +2350,7 @@
         
                 if(document.getElementById('showCorrectionText').checked && Object.values(teamMap).some(t=>t.correction!==0)) finalOutputStr += " (補正込み)";
         
-                if (myScore !== null && (mode === 'target' || optShowBorderDiffSuffix || showGuaranteeText || showDefeatText)) {
+                if (myScore !== null && (mode === 'target' || optShowBorderDiffSuffix || showGuaranteeText || showDefeatText)) {        
                     let posAbove = 0, strAbove = 0;
                     const memCount = 24 / teamCount, sortedPts = [...pointsTable].sort((a,b) => b-a);
                     let maxP=0, minP=0; 
@@ -2343,7 +2390,7 @@
                     
                     if (nameVal === '') hasEmptyTeamName = true;
                     
-                    // ▼ 追加：現在選択されている自チームの「入力文字」が空欄かチェックする
+                    // 現在選択されている自チームの「入力文字」が空欄かチェックする
                     if (nameVal !== '' && nameVal === currentMyTeam && abbrVal === '') {
                         myTeamAbbrEmpty = true;
                     }
@@ -2407,16 +2454,119 @@
                     outputEl.style.backgroundColor = '#f8f9fa';   // 通常は白
                 }
         
-                saveData();
+                // 自動コピー（表示されている文字列 displayStr をコピーする）
+                let shouldCopy = true;
+                if (raceHistory.length === 0 || hasEmptyTeamName || displayStr.includes("自チームを選択してください") || displayStr.includes("自チームの入力文字を設定してください") || displayStr === previousOutputStr) {
+                    shouldCopy = false;
+                }
+                if (!skipAutoCopy && shouldCopy) {
+                    if (typeof autoCopyResult === 'function') autoCopyResult(displayStr);
+                }       
+                
+                // OBS用ウィンドウが開いていれば、スコアボードを更新する。
+                if (obsWindow && !obsWindow.closed) {
+                    let htmlStr = '<div id="score-container">';
+                    
+                    // チーム数が「7以上」なら2列にする
+                    const isTwoColumns = (sorted.length >= 7);
+                    
+                    if (isTwoColumns) {
+                        // 奇数の場合（例：7チーム）は、左側を4チーム、右側を3チームにする
+                        const half = Math.ceil(sorted.length / 2); 
+                        
+                        // 大きな1つの行を作り、その中に「左のマス」と「右のマス」を作ります
+                        htmlStr += '<div style="display: table-row;">';
+                        
+                        // 🔽 左半分の列（1位〜半分まで）
+                        htmlStr += '<div style="display: table-cell; vertical-align: top; padding: 0;">';
+                        htmlStr += '<div style="display: table; width: 100%; border-collapse: collapse;">';
+                        for (let i = 0; i < half; i++) {
+                            htmlStr += `
+                                <div class="team-row">
+                                    <div class="team-name">${sorted[i].name}</div>
+                                    <div class="team-score">${sorted[i].score}</div>
+                                </div>
+                            `;
+                        }
+                        htmlStr += '</div></div>';
+                        
+                        // 🔽 右半分の列（半分＋1位〜一番下まで）
+                        htmlStr += '<div style="display: table-cell; vertical-align: top; padding: 0; border-left: 2px double #888888;">';
+                        htmlStr += '<div style="display: table; width: 100%; border-collapse: collapse;">';
+                        for (let i = half; i < sorted.length; i++) {
+                            htmlStr += `
+                                <div class="team-row">
+                                    <div class="team-name">${sorted[i].name}</div>
+                                    <div class="team-score">${sorted[i].score}</div>
+                                </div>
+                            `;
+                        }
+                        htmlStr += '</div></div>';
+                        
+                        htmlStr += '</div>'; // 大きな行の終了
+                    } else {
+                        // 🌟 チーム数が6以下の場合は、これまで通り1列
+                        for (let i = 0; i < sorted.length; i++) {
+                            htmlStr += `
+                                <div class="team-row">
+                                    <div class="team-name">${sorted[i].name}</div>
+                                    <div class="team-score">${sorted[i].score}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // 残りレース数
+                    htmlStr += `
+                        <div class="remain-text">＠${rem}</div>
+                    `;
+                    htmlStr += '</div>';
+                    
+                    // OBS画面のbodyの中身を丸ごと書き換え
+                    obsWindow.document.body.innerHTML = htmlStr;
+                }
             
-            // 自動コピー（表示されている文字列 displayStr をコピーする）
-            let shouldCopy = true;
-            if (raceHistory.length === 0 || hasEmptyTeamName || displayStr.includes("自チームを選択してください") || displayStr.includes("自チームの入力文字を設定してください") || displayStr === previousOutputStr) {
-                shouldCopy = false;
+            saveData();
+
+        }
+
+        // OBS用ウィンドウを管理する変数と関数
+        let obsWindow = null;
+
+        function openObsWindow() {
+            if (obsWindow && !obsWindow.closed) {
+                obsWindow.focus();
+                return;
             }
-            if (!skipAutoCopy && shouldCopy) {
-                if (typeof autoCopyResult === 'function') autoCopyResult(displayStr);
-            }
+            
+            obsWindow = window.open('', 'obsWindow', 'width=350,height=500,menubar=no,toolbar=no,location=no,status=no');
+            
+            obsWindow.document.write(`
+                <html>
+                <head>
+                    <title>配信用点数表</title>
+                    <style>
+                        body { background-color: #00FF00; color: white; font-family: 'Arial Black', 'Segoe UI', sans-serif; padding: 0; margin: 0; }
+                        #score-container {position: fixed;top: 20px;right: 20px;background-color: rgba(0, 0, 0, 0.9); border-radius: 8px 8px 0 0; padding: 8px 0 0 0; box-shadow: none;display: table; border-collapse: collapse; }
+                        .team-row {display: table-row;}
+                        .team-name, .team-score {display: table-cell;vertical-align: middle;border-bottom: 1px solid #888888;padding: 3px 0;white-space: nowrap; }
+                        .team-row:last-child .team-name,
+                        .team-row:last-child .team-score { border-bottom: none; }
+                        .team-name {font-size: 16px;font-weight: bold;text-shadow: 1px 1px 2px rgba(0,0,0,0.8);text-align: left;padding-left: 10px;padding-right: 15px; }
+                        .team-score {font-size: 20px;font-weight: bold;text-shadow: 1px 1px 2px rgba(0,0,0,0.8);text-align: right;padding-right: 10px; }
+
+                        .remain-row .team-name,
+                        .remain-row .team-score {border-bottom: none; padding-top: 2px; padding-bottom: 2px;  }
+                        .remain-text {display: table-caption;caption-side: bottom;text-align: right;font-size: 14px; font-weight: normal; color: white; text-shadow: none; background-color: rgba(0, 0, 0, 0.9);border-radius: 0 0 8px 8px; padding: 4px 10px 8px 0; border-top: 2px solid #888888;}
+                    </style>
+                </head>
+                <body>
+                    </body>
+                </html>
+            `);
+            obsWindow.document.close();
+            
+            updateAll();
         }
 
         let toastTimeout; // 何度も呼ばれたときにタイマーをリセットするための変数
@@ -2433,7 +2583,7 @@
             // シークバーのアニメーション設定
             bar.style.transition = 'none';
             bar.style.width = '100%';
-            void bar.offsetWidth; // アニメーションをリセットするためのおまじない
+            void bar.offsetWidth; 
             bar.style.transition = 'width 2500ms linear';
             bar.style.width = '0%';
 
@@ -2887,6 +3037,9 @@
 
         function resetRaces() { 
             if(confirm("レース結果と点数補正をすべてリセットしますか？")) { 
+                if (obsWindow && !obsWindow.closed) {
+                    obsWindow.close();
+                }
                 raceHistory = []; document.querySelectorAll('.team-input-row .correction').forEach(i => i.value = 0);
                 clearRaceInputs(); renderHistory(); updateAll(event);
             } 
@@ -2896,6 +3049,9 @@
             if(confirm("設定、チーム情報、履歴をすべて初期化しますか？")) { 
                 skipAutoCopy = true; 
                 localStorage.clear(); 
+                if (obsWindow && !obsWindow.closed) {
+                    obsWindow.close();
+                }
                 
                 // location.reload(); を消して、以下の行に変更します。
                 // ブラウザの「おせっかいな復元」を完全に断ち切って、真っ新な状態でページを開き直します。
@@ -2910,7 +3066,7 @@
                 hideSuggest(); 
             }
         });
-        // ▼ 新機能：コースの「始点 ⇔ 終点」をShift＋左右で移動する
+        // コースの「始点 ⇔ 終点」をShift＋左右で移動する
         document.addEventListener('keydown', e => { 
             // Shiftと左右キーが押された時、かつ今いる場所が入力枠(<input>)であるか
             if (e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && e.target.tagName === 'INPUT') {
@@ -2944,7 +3100,7 @@
         
         });
 
-        // ▼ 新規レースおよび履歴枠での「Enterキーで終点へ移動」機能
+        // ▼新規レースおよび履歴枠での「Enterキーで終点へ移動」機能
         document.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 const currentId = e.target.id;
